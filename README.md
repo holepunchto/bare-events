@@ -1,4 +1,4 @@
-# events
+# @pearjs/events
 
 Tiny events replacement for the 99%
 
