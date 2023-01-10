@@ -58,6 +58,10 @@ module.exports = class EventEmitter {
 
   static EventEmitter = this
 
+  static once (e, name) {
+    return new Promise((resolve) => e.once(name, resolve))
+  }
+
   on (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
     e.add(fn, false)
