@@ -88,6 +88,11 @@ module.exports = class EventEmitter {
     return e === undefined ? false : e.emit(this, ...args)
   }
 
+  listenerCount (name) {
+    const e = this._events[name]
+    return e === undefined ? 0 : e.list.length
+  }
+
   // compat
 
   addListener (name, fn) {
