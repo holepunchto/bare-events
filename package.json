@@ -1,6 +1,6 @@
 {
   "name": "@pearjs/events",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Tiny events replacement for the 99%",
   "main": "index.js",
   "dependencies": {},
