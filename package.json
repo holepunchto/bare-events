@@ -1,12 +1,11 @@
 {
   "name": "@pearjs/events",
   "version": "1.1.1",
-  "description": "Tiny events replacement for the 99%",
+  "description": "Event emitters for JavaScript",
   "main": "index.js",
-  "dependencies": {},
-  "devDependencies": {
-    "standard": "^17.0.0"
-  },
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "standard"
   },
@@ -14,10 +13,13 @@
     "type": "git",
     "url": "https://github.com/holepunchto/pearjs-events.git"
   },
-  "author": "Mathias Buus (@mafintosh)",
+  "author": "Holepunch",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/holepunchto/pearjs-events/issues"
   },
-  "homepage": "https://github.com/holepunchto/pearjs-events"
+  "homepage": "https://github.com/holepunchto/pearjs-events#readme",
+  "devDependencies": {
+    "standard": "^17.0.0"
+  }
 }

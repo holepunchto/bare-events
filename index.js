@@ -69,6 +69,10 @@ module.exports = class EventEmitter {
     return this
   }
 
+  addListener (name, fn) {
+    this.on(name, fn)
+  }
+
   once (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
     e.add(fn, true)
@@ -83,6 +87,10 @@ module.exports = class EventEmitter {
     return this
   }
 
+  removeListener (name, fn) {
+    this.off(name, fn)
+  }
+
   emit (name, ...args) {
     const e = this._events[name]
     return e === undefined ? false : e.emit(this, ...args)
@@ -91,15 +99,5 @@ module.exports = class EventEmitter {
   listenerCount (name) {
     const e = this._events[name]
     return e === undefined ? 0 : e.list.length
-  }
-
-  // compat
-
-  addListener (name, fn) {
-    return this.on(name, fn)
-  }
-
-  removeListener (name, fn) {
-    return this.off(name, fn)
   }
 }

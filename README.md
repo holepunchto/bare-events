@@ -1,6 +1,6 @@
 # @pearjs/events
 
-Tiny events replacement for the 99%
+Event emitters for JavaScript.
 
 ```
 npm install @pearjs/events
