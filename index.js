@@ -100,4 +100,12 @@ module.exports = class EventEmitter {
     const e = this._events[name]
     return e === undefined ? 0 : e.list.length
   }
+
+  getMaxListeners () {
+    return EventEmitter.defaultMaxListeners
+  }
+
+  setMaxListeners (n) {}
 }
+
+exports.defaultMaxListeners = 10
