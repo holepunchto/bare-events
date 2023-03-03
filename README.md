@@ -22,4 +22,4 @@ e.emit('hello', 'world')
 
 ## License
 
-MIT
+Apache-2.0

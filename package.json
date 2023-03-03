@@ -14,7 +14,7 @@
     "url": "https://github.com/holepunchto/pearjs-events.git"
   },
   "author": "Holepunch",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/holepunchto/pearjs-events/issues"
   },
