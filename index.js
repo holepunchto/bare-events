@@ -5,8 +5,12 @@ class Event {
     this.removing = null
   }
 
-  add (fn, once) {
-    this.list.push([fn, once])
+  add (fn, prepend, once) {
+    if (prepend) {
+      this.list.unshift([fn, once])
+    } else {
+      this.list.push([fn, once])
+    }
   }
 
   remove (fn) {
@@ -62,20 +66,28 @@ module.exports = class EventEmitter {
     return new Promise((resolve) => e.once(name, resolve))
   }
 
-  on (name, fn) {
+  #on (name, prepend, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
-    e.add(fn, false)
+    e.add(fn, prepend, false)
     this.emit('newListener', name, fn)
     return this
   }
 
+  on (name, fn) {
+    return this.#on(name, false, fn)
+  }
+
   addListener (name, fn) {
-    this.on(name, fn)
+    this.#on(name, false, fn)
+  }
+
+  prependListener (name, fn) {
+    this.#on(name, true, fn)
   }
 
   once (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
-    e.add(fn, true)
+    e.add(fn, false, true)
     this.emit('newListener', name, fn)
     return this
   }
