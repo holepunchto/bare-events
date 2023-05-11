@@ -85,7 +85,7 @@ module.exports = class EventEmitter {
 
   once (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
-    e.add(fn, false, true)
+    e.append(fn, true)
     this.emit('newListener', name, fn)
     return this
   }
