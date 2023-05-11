@@ -55,25 +55,20 @@ class Event {
   }
 }
 
-module.exports = class EventEmitter {
+module.exports = exports = class EventEmitter {
   constructor () {
     this._events = Object.create(null)
-  }
-
-  static EventEmitter = this
-
-  static once (e, name) {
-    return new Promise((resolve) => e.once(name, resolve))
-  }
-
-  on (name, fn) {
-    this.addListener(name, fn)
-    return this
   }
 
   addListener (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
     e.append(fn, false)
+    this.emit('newListener', name, fn)
+  }
+
+  addOnceListener (name, fn) {
+    const e = this._events[name] || (this._events[name] = new Event())
+    e.append(fn, true)
     this.emit('newListener', name, fn)
   }
 
@@ -83,22 +78,31 @@ module.exports = class EventEmitter {
     this.emit('newListener', name, fn)
   }
 
-  once (name, fn) {
+  prependOnceListener (name, fn) {
     const e = this._events[name] || (this._events[name] = new Event())
-    e.append(fn, true)
+    e.prepend(fn, true)
     this.emit('newListener', name, fn)
+  }
+
+  removeListener (name, fn) {
+    const e = this._events[name]
+    if (e !== undefined) e.remove(fn)
+    this.emit('removeListener', name, fn)
+  }
+
+  on (name, fn) {
+    this.addListener(name, fn)
+    return this
+  }
+
+  once (name, fn) {
+    this.addOnceListener(name, fn)
     return this
   }
 
   off (name, fn) {
-    const e = this._events[name]
-    if (e !== undefined) e.remove(fn)
-    this.emit('removeListener', name, fn)
+    this.removeListener(name, fn)
     return this
-  }
-
-  removeListener (name, fn) {
-    this.off(name, fn)
   }
 
   emit (name, ...args) {
@@ -119,3 +123,7 @@ module.exports = class EventEmitter {
 }
 
 exports.defaultMaxListeners = 10
+
+exports.once = function once (e, name) {
+  return new Promise((resolve) => e.once(name, resolve))
+}

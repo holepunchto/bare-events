@@ -9,9 +9,9 @@ npm install @pearjs/events
 ## Usage
 
 ``` js
-const events = require('@pearjs/events')
+const EventEmitter = require('@pearjs/events')
 
-const e = new events.EventEmitter()
+const e = new EventEmitter()
 
 e.on('hello', function (data) {
   console.log(data)

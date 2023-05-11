@@ -1,4 +1,4 @@
-const EventEmitter = require('./')
+const EventEmitter = require('.')
 
 const e = new EventEmitter()
 
