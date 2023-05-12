@@ -1,15 +1,15 @@
-# @pearjs/events
+# bare-events
 
 Event emitters for JavaScript.
 
 ```
-npm install @pearjs/events
+npm install bare-events
 ```
 
 ## Usage
 
 ``` js
-const EventEmitter = require('@pearjs/events')
+const EventEmitter = require('bare-events')
 
 const e = new EventEmitter()
 

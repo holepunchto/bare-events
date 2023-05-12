@@ -1,5 +1,5 @@
 {
-  "name": "@pearjs/events",
+  "name": "bare-events",
   "version": "1.2.0",
   "description": "Event emitters for JavaScript",
   "main": "index.js",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/holepunchto/pearjs-events.git"
+    "url": "https://github.com/holepunchto/bare-events.git"
   },
   "author": "Holepunch",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/holepunchto/pearjs-events/issues"
+    "url": "https://github.com/holepunchto/bare-events/issues"
   },
-  "homepage": "https://github.com/holepunchto/pearjs-events#readme",
+  "homepage": "https://github.com/holepunchto/bare-events#readme",
   "devDependencies": {
     "standard": "^17.0.0"
   }
