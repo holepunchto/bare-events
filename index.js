@@ -122,6 +122,8 @@ module.exports = exports = class EventEmitter {
   setMaxListeners (n) {}
 }
 
+exports.EventEmitter = exports
+
 exports.defaultMaxListeners = 10
 
 exports.once = function once (e, name) {
