@@ -7,7 +7,7 @@
     "index.js"
   ],
   "scripts": {
-    "test": "standard"
+    "test": "standard && bare test.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/holepunchto/bare-events#readme",
   "devDependencies": {
+    "brittle": "^3.3.2",
     "standard": "^17.0.0"
   }
 }

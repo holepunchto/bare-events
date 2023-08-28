@@ -1,4 +1,4 @@
-class Event {
+class EventListener {
   constructor () {
     this.list = []
     this.emitting = false
@@ -61,25 +61,25 @@ module.exports = exports = class EventEmitter {
   }
 
   addListener (name, fn) {
-    const e = this._events[name] || (this._events[name] = new Event())
+    const e = this._events[name] || (this._events[name] = new EventListener())
     e.append(fn, false)
     this.emit('newListener', name, fn)
   }
 
   addOnceListener (name, fn) {
-    const e = this._events[name] || (this._events[name] = new Event())
+    const e = this._events[name] || (this._events[name] = new EventListener())
     e.append(fn, true)
     this.emit('newListener', name, fn)
   }
 
   prependListener (name, fn) {
-    const e = this._events[name] || (this._events[name] = new Event())
+    const e = this._events[name] || (this._events[name] = new EventListener())
     e.prepend(fn, false)
     this.emit('newListener', name, fn)
   }
 
   prependOnceListener (name, fn) {
-    const e = this._events[name] || (this._events[name] = new Event())
+    const e = this._events[name] || (this._events[name] = new EventListener())
     e.prepend(fn, true)
     this.emit('newListener', name, fn)
   }
@@ -126,6 +126,22 @@ exports.EventEmitter = exports
 
 exports.defaultMaxListeners = 10
 
-exports.once = function once (e, name) {
-  return new Promise((resolve) => e.once(name, resolve))
+exports.once = function once (emitter, name, opts = {}) {
+  const {
+    signal
+  } = opts
+
+  return new Promise((resolve, reject) => {
+    if (signal) signal.addEventListener('abort', abort)
+
+    emitter.once(name, (...args) => {
+      if (signal) signal.removeEventListener('abort', abort)
+
+      resolve(args)
+    })
+
+    function abort () {
+      reject(signal.reason)
+    }
+  })
 }
