@@ -61,27 +61,27 @@ module.exports = exports = class EventEmitter {
   }
 
   addListener (name, fn) {
+    this.emit('newListener', name, fn)
     const e = this._events[name] || (this._events[name] = new EventListener())
     e.append(fn, false)
-    this.emit('newListener', name, fn)
   }
 
   addOnceListener (name, fn) {
+    this.emit('newListener', name, fn)
     const e = this._events[name] || (this._events[name] = new EventListener())
     e.append(fn, true)
-    this.emit('newListener', name, fn)
   }
 
   prependListener (name, fn) {
+    this.emit('newListener', name, fn)
     const e = this._events[name] || (this._events[name] = new EventListener())
     e.prepend(fn, false)
-    this.emit('newListener', name, fn)
   }
 
   prependOnceListener (name, fn) {
+    this.emit('newListener', name, fn)
     const e = this._events[name] || (this._events[name] = new EventListener())
     e.prepend(fn, true)
-    this.emit('newListener', name, fn)
   }
 
   removeListener (name, fn) {
