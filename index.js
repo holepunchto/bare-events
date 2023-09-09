@@ -1,3 +1,5 @@
+const errors = require('./lib/errors')
+
 class EventListener {
   constructor () {
     this.list = []
@@ -5,15 +7,17 @@ class EventListener {
     this.removing = null
   }
 
-  append (fn, once) {
+  append (ctx, name, fn, once) {
+    ctx.emit('newListener', name, fn) // Emit BEFORE adding
     this.list.push([fn, once])
   }
 
-  prepend (fn, once) {
+  prepend (ctx, name, fn, once) {
+    ctx.emit('newListener', name, fn) // Emit BEFORE adding
     this.list.unshift([fn, once])
   }
 
-  remove (fn) {
+  remove (ctx, name, fn) {
     if (this.emitting === true) {
       if (this.removing === null) this.removing = []
       this.removing.push(fn)
@@ -25,21 +29,27 @@ class EventListener {
 
       if (l[0] === fn) {
         this.list.splice(i, 1)
+        ctx.emit('removeListener', name, fn) // Emit AFTER removing
         return
       }
     }
   }
 
-  emit (ctx, ...args) {
-    this.emitting = true
+  emit (ctx, name, ...args) {
     const listeners = this.list.length > 0
 
     try {
+      this.emitting = true
+
       for (let i = 0; i < this.list.length; i++) {
         const l = this.list[i]
 
+        if (l[1] === true) {
+          this.list.splice(i--, 1)
+          ctx.emit('removeListener', name, l[0]) // Emit AFTER removing
+        }
+
         l[0].call(ctx, ...args)
-        if (l[1] === true) this.list.splice(i--, 1)
       }
     } finally {
       this.emitting = false
@@ -47,12 +57,30 @@ class EventListener {
       if (this.removing !== null) {
         const fns = this.removing
         this.removing = null
-        for (const fn of fns) this.remove(fn)
+        for (const fn of fns) this.remove(ctx, name, fn)
       }
     }
 
     return listeners
   }
+}
+
+function appendListener (ctx, name, fn, once) {
+  const e = ctx._events[name] || (ctx._events[name] = new EventListener())
+  e.append(ctx, name, fn, once)
+  return ctx
+}
+
+function prependListener (ctx, name, fn, once) {
+  const e = ctx._events[name] || (ctx._events[name] = new EventListener())
+  e.prepend(ctx, name, fn, once)
+  return ctx
+}
+
+function removeListener (ctx, name, fn) {
+  const e = ctx._events[name]
+  if (e !== undefined) e.remove(ctx, name, fn)
+  return ctx
 }
 
 module.exports = exports = class EventEmitter {
@@ -61,55 +89,40 @@ module.exports = exports = class EventEmitter {
   }
 
   addListener (name, fn) {
-    this.emit('newListener', name, fn)
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.append(fn, false)
-    return this
+    return appendListener(this, name, fn, false)
   }
 
   addOnceListener (name, fn) {
-    this.emit('newListener', name, fn)
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.append(fn, true)
-    return this
+    return appendListener(this, name, fn, true)
   }
 
   prependListener (name, fn) {
-    this.emit('newListener', name, fn)
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.prepend(fn, false)
-    return this
+    return prependListener(this, name, fn, false)
   }
 
   prependOnceListener (name, fn) {
-    this.emit('newListener', name, fn)
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.prepend(fn, true)
-    return this
+    return prependListener(this, name, fn, true)
   }
 
   removeListener (name, fn) {
-    const e = this._events[name]
-    if (e !== undefined) e.remove(fn)
-    this.emit('removeListener', name, fn)
-    return this
+    return removeListener(this, name, fn)
   }
 
   on (name, fn) {
-    return this.addListener(name, fn)
+    return appendListener(this, name, fn, false)
   }
 
   once (name, fn) {
-    return this.addOnceListener(name, fn)
+    return appendListener(this, name, fn, true)
   }
 
   off (name, fn) {
-    return this.removeListener(name, fn)
+    return removeListener(this, name, fn)
   }
 
   emit (name, ...args) {
     const e = this._events[name]
-    return e === undefined ? false : e.emit(this, ...args)
+    return e === undefined ? false : e.emit(this, name, ...args)
   }
 
   listenerCount (name) {
@@ -135,7 +148,7 @@ exports.once = function once (emitter, name, opts = {}) {
 
   return new Promise((resolve, reject) => {
     if (signal) {
-      if (signal.aborted) return reject(signal.reason)
+      if (signal.aborted) return abort()
 
       signal.addEventListener('abort', abort)
     }
@@ -147,7 +160,7 @@ exports.once = function once (emitter, name, opts = {}) {
     })
 
     function abort () {
-      reject(signal.reason)
+      reject(errors.OPERATION_ABORTED(signal.reason))
     }
   })
 }
