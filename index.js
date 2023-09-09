@@ -24,7 +24,7 @@ class EventListener {
       return
     }
 
-    for (let i = 0; i < this.list.length; i++) {
+    for (let i = 0, n = this.list.length; i < n; i++) {
       const l = this.list[i]
 
       if (l[0] === fn) {
@@ -37,16 +37,17 @@ class EventListener {
   }
 
   emit (ctx, name, ...args) {
-    const listeners = this.list.length > 0
+    const list = [...this.list]
 
     try {
       this.emitting = true
 
-      for (let i = 0; i < this.list.length; i++) {
-        const l = this.list[i]
+      for (let i = 0, n = list.length; i < n; i++) {
+        const l = list[i]
 
         if (l[1] === true) {
-          this.list.splice(i--, 1)
+          const i = this.list.indexOf(l)
+          if (i !== -1) this.list.splice(i, 1)
           if (this.list.length === 0) delete ctx._events[name]
           ctx.emit('removeListener', name, l[0]) // Emit AFTER removing
         }
@@ -63,7 +64,7 @@ class EventListener {
       }
     }
 
-    return listeners
+    return list.length > 0
   }
 }
 

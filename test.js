@@ -17,6 +17,44 @@ test('new listener event fires before adding', (t) => {
   t.alike(fired, [1, 2])
 })
 
+test('add new listener during emit', (t) => {
+  const emitter = new EventEmitter()
+  const fired = []
+
+  emitter
+    .on('hello', () => { fired.push(1) })
+    .on('hello', () => { fired.push(2); emitter.addListener('hello', () => fired.push(4)) })
+    .on('hello', () => { fired.push(3) })
+    .emit('hello')
+
+  t.alike(fired, [1, 2, 3])
+
+  fired.length = 0
+
+  emitter.emit('hello')
+
+  t.alike(fired, [1, 2, 3, 4])
+})
+
+test('prepend new listener during emit', (t) => {
+  const emitter = new EventEmitter()
+  const fired = []
+
+  emitter
+    .on('hello', () => { fired.push(1) })
+    .on('hello', () => { fired.push(2); emitter.prependListener('hello', () => fired.push(4)) })
+    .on('hello', () => { fired.push(3) })
+    .emit('hello')
+
+  t.alike(fired, [1, 2, 3])
+
+  fired.length = 0
+
+  emitter.emit('hello')
+
+  t.alike(fired, [4, 1, 2, 3])
+})
+
 test('once', async (t) => {
   const emitter = new EventEmitter()
 
@@ -84,4 +122,16 @@ test('once triggers listener events', (t) => {
   emitter
     .once('hello', fn)
     .emit('hello')
+})
+
+test('reentrant emit from once', (t) => {
+  const emitter = new EventEmitter()
+  const fired = []
+
+  emitter
+    .on('hello', () => fired.push(1))
+    .once('hello', () => { fired.push(2); emitter.emit('hello') })
+    .emit('hello')
+
+  t.alike(fired, [1, 2, 1])
 })
