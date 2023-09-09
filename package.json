@@ -4,7 +4,8 @@
   "description": "Event emitters for JavaScript",
   "main": "index.js",
   "files": [
-    "index.js"
+    "index.js",
+    "lib"
   ],
   "scripts": {
     "test": "standard && bare test.js"
