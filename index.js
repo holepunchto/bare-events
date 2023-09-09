@@ -5,41 +5,12 @@ class EventListener {
     this.removing = null
   }
 
-  once (fn) {
-    if (this.list.length === 0) return
-
-    // very likely the last added
-    let l = this.list[this.list.length - 1]
-
-    if (l[0] === fn) {
-      l[1] = true
-      return
-    }
-
-    // if not then the first added
-    l = this.list[0]
-
-    if (l[0] === fn) {
-      l[1] = true
-      return
-    }
-
-    // just in case thats wrong due to v complex inheritance...
-    for (let i = 1; i < this.list.length - 1; i++) {
-      l = this.list[i]
-      if (l[0] === fn) {
-        l[1] = true
-        return
-      }
-    }
+  append (fn, once) {
+    this.list.push([fn, once])
   }
 
-  append (fn) {
-    this.list.push([fn, false])
-  }
-
-  prepend (fn) {
-    this.list.unshift([fn, false])
+  prepend (fn, once) {
+    this.list.unshift([fn, once])
   }
 
   remove (fn) {
@@ -90,44 +61,50 @@ module.exports = exports = class EventEmitter {
   }
 
   addListener (name, fn) {
-    return this.on(name, fn)
+    this.emit('newListener', name, fn)
+    const e = this._events[name] || (this._events[name] = new EventListener())
+    e.append(fn, false)
+    return this
   }
 
-  removeListener (name, fn) {
-    return this.off(name, fn)
+  addOnceListener (name, fn) {
+    this.emit('newListener', name, fn)
+    const e = this._events[name] || (this._events[name] = new EventListener())
+    e.append(fn, true)
+    return this
   }
 
   prependListener (name, fn) {
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.prepend(fn)
     this.emit('newListener', name, fn)
+    const e = this._events[name] || (this._events[name] = new EventListener())
+    e.prepend(fn, false)
     return this
   }
 
   prependOnceListener (name, fn) {
-    this.prependListener(name, fn)
-    this._events[name].once(fn)
-    return this
-  }
-
-  on (name, fn) {
-    const e = this._events[name] || (this._events[name] = new EventListener())
-    e.append(fn)
     this.emit('newListener', name, fn)
+    const e = this._events[name] || (this._events[name] = new EventListener())
+    e.prepend(fn, true)
     return this
   }
 
-  once (name, fn) {
-    this.on(name, fn)
-    this._events[name].once(fn)
-    return this
-  }
-
-  off (name, fn) {
+  removeListener (name, fn) {
     const e = this._events[name]
     if (e !== undefined) e.remove(fn)
     this.emit('removeListener', name, fn)
     return this
+  }
+
+  on (name, fn) {
+    return this.addListener(name, fn)
+  }
+
+  once (name, fn) {
+    return this.addOnceListener(name, fn)
+  }
+
+  off (name, fn) {
+    return this.removeListener(name, fn)
   }
 
   emit (name, ...args) {
