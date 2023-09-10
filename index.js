@@ -3,8 +3,6 @@ const errors = require('./lib/errors')
 class EventListener {
   constructor () {
     this.list = []
-    this.emitting = false
-    this.removing = null
   }
 
   append (ctx, name, fn, once) {
@@ -18,18 +16,14 @@ class EventListener {
   }
 
   remove (ctx, name, fn) {
-    if (this.emitting === true) {
-      if (this.removing === null) this.removing = []
-      this.removing.push(fn)
-      return
-    }
-
     for (let i = 0, n = this.list.length; i < n; i++) {
       const l = this.list[i]
 
       if (l[0] === fn) {
         this.list.splice(i, 1)
+
         if (this.list.length === 0) delete ctx._events[name]
+
         ctx.emit('removeListener', name, fn) // Emit AFTER removing
         return
       }
@@ -39,29 +33,12 @@ class EventListener {
   emit (ctx, name, ...args) {
     const list = [...this.list]
 
-    try {
-      this.emitting = true
+    for (let i = 0, n = list.length; i < n; i++) {
+      const l = list[i]
 
-      for (let i = 0, n = list.length; i < n; i++) {
-        const l = list[i]
+      if (l[1] === true) this.remove(ctx, name, l[0])
 
-        if (l[1] === true) {
-          const i = this.list.indexOf(l)
-          if (i !== -1) this.list.splice(i, 1)
-          if (this.list.length === 0) delete ctx._events[name]
-          ctx.emit('removeListener', name, l[0]) // Emit AFTER removing
-        }
-
-        l[0].call(ctx, ...args)
-      }
-    } finally {
-      this.emitting = false
-
-      if (this.removing !== null) {
-        const fns = this.removing
-        this.removing = null
-        for (const fn of fns) this.remove(ctx, name, fn)
-      }
+      l[0].call(ctx, ...args)
     }
 
     return list.length > 0
