@@ -105,6 +105,11 @@ module.exports = exports = class EventEmitter {
     return e === undefined ? false : e.emit(this, name, ...args)
   }
 
+  listeners (name) {
+    const e = this._events[name]
+    return e === undefined ? [] : [...e.list]
+  }
+
   listenerCount (name) {
     const e = this._events[name]
     return e === undefined ? 0 : e.list.length
