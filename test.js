@@ -1,6 +1,8 @@
 const test = require('brittle')
 const EventEmitter = require('.')
 
+const isBare = typeof Bare !== 'undefined'
+
 test('new listener event fires before adding', (t) => {
   const emitter = new EventEmitter()
   const fired = []
@@ -65,7 +67,7 @@ test('once', async (t) => {
   t.alike(await promise, ['world', '!'])
 })
 
-test('once signal + abort', { skip: process.versions.bare }, async (t) => {
+test('once signal + abort', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -76,7 +78,7 @@ test('once signal + abort', { skip: process.versions.bare }, async (t) => {
   await t.exception(promise)
 })
 
-test('once signal + abort reason', { skip: process.versions.bare }, async (t) => {
+test('once signal + abort reason', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -92,7 +94,7 @@ test('once signal + abort reason', { skip: process.versions.bare }, async (t) =>
   }
 })
 
-test('once signal + already aborted', { skip: process.versions.bare }, async (t) => {
+test('once signal + already aborted', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -134,4 +136,60 @@ test('reentrant emit from once', (t) => {
     .emit('hello')
 
   t.alike(fired, [1, 2, 1])
+})
+
+test('remove all', (t) => {
+  const emitter = new EventEmitter()
+
+  emitter
+    .on('foo', () => t.fail())
+    .on('bar', () => t.fail())
+    .removeAllListeners()
+
+  emitter.emit('foo')
+  emitter.emit('bar')
+})
+
+test('remove all with name', (t) => {
+  t.plan(1)
+
+  const emitter = new EventEmitter()
+
+  emitter
+    .on('foo', () => t.fail())
+    .on('bar', () => t.pass())
+    .removeAllListeners('foo')
+
+  emitter.emit('foo')
+  emitter.emit('bar')
+})
+
+test('remove all triggers listener events', (t) => {
+  t.plan(2)
+
+  const emitter = new EventEmitter()
+
+  emitter
+    .on('foo', () => t.fail())
+    .on('bar', () => t.fail())
+    .on('removeListener', (name) => t.pass(name))
+    .removeAllListeners()
+
+  emitter.emit('foo')
+  emitter.emit('bar')
+})
+
+test('remove all with name triggers listener events', (t) => {
+  t.plan(2)
+
+  const emitter = new EventEmitter()
+
+  emitter
+    .on('foo', () => t.fail())
+    .on('bar', () => t.pass())
+    .on('removeListener', (name) => t.pass(name))
+    .removeAllListeners('foo')
+
+  emitter.emit('foo')
+  emitter.emit('bar')
 })

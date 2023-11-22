@@ -30,6 +30,17 @@ class EventListener {
     }
   }
 
+  removeAll (ctx, name) {
+    const list = [...this.list]
+    this.list = []
+
+    for (let i = list.length - 1; i >= 0; i--) {
+      ctx.emit('removeListener', name, list[i][0]) // Emit AFTER removing
+    }
+
+    if (this.list.length === 0) delete ctx._events[name]
+  }
+
   emit (ctx, name, ...args) {
     const list = [...this.list]
 
@@ -120,6 +131,20 @@ module.exports = exports = class EventEmitter {
   }
 
   setMaxListeners (n) {}
+
+  removeAllListeners (name) {
+    if (arguments.length === 0) {
+      for (const key of Reflect.ownKeys(this._events)) {
+        if (key === 'removeListener') continue
+        this.removeAllListeners(key)
+      }
+      this.removeAllListeners('removeListener')
+    } else {
+      const e = this._events[name]
+      if (e !== undefined) e.removeAll(this, name)
+    }
+    return this
+  }
 }
 
 exports.EventEmitter = exports
