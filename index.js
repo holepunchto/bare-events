@@ -151,25 +151,117 @@ exports.EventEmitter = exports
 
 exports.defaultMaxListeners = 10
 
+exports.on = function on (emitter, name, opts = {}) {
+  const {
+    signal
+  } = opts
+
+  if (signal && signal.aborted) {
+    throw errors.OPERATION_ABORTED(signal.reason)
+  }
+
+  let error = null
+  let done = false
+
+  const events = []
+  const promises = []
+
+  emitter.on(name, onevent)
+
+  if (name !== 'error') emitter.on('error', onerror)
+
+  if (signal) signal.addEventListener('abort', onabort)
+
+  return {
+    next () {
+      if (events.length) {
+        return Promise.resolve({ value: events.shift(), done: false })
+      }
+
+      if (error) {
+        const err = error
+
+        error = null
+
+        return Promise.reject(err)
+      }
+
+      if (done) return onclose()
+
+      return new Promise((resolve, reject) =>
+        promises.push({ resolve, reject })
+      )
+    },
+
+    return () {
+      return onclose()
+    },
+
+    throw (err) {
+      return onerror(err)
+    },
+
+    [Symbol.asyncIterator] () {
+      return this
+    }
+  }
+
+  function onevent (...args) {
+    if (promises.length) {
+      promises.shift().resolve({ value: args, done: false })
+    } else {
+      events.push(args)
+    }
+  }
+
+  function onerror (err) {
+    if (promises.length) {
+      promises.shift().reject(err)
+    } else {
+      error = err
+    }
+
+    return Promise.resolve({ done: true })
+  }
+
+  function onabort () {
+    onerror(errors.OPERATION_ABORTED(signal.reason))
+  }
+
+  function onclose () {
+    emitter.off(name, onevent)
+
+    if (name !== 'error') emitter.off('error', onerror)
+
+    if (signal) signal.removeEventListener('abort', onabort)
+
+    done = true
+
+    if (promises.length) promises.shift().resolve({ done: true })
+
+    return Promise.resolve({ done: true })
+  }
+}
+
 exports.once = function once (emitter, name, opts = {}) {
   const {
     signal
   } = opts
 
-  return new Promise((resolve, reject) => {
-    if (signal) {
-      if (signal.aborted) return abort()
+  if (signal && signal.aborted) {
+    throw errors.OPERATION_ABORTED(signal.reason)
+  }
 
-      signal.addEventListener('abort', abort)
-    }
+  return new Promise((resolve, reject) => {
+    if (signal) signal.addEventListener('abort', onabort)
 
     emitter.once(name, (...args) => {
-      if (signal) signal.removeEventListener('abort', abort)
+      if (signal) signal.removeEventListener('abort', onabort)
 
       resolve(args)
     })
 
-    function abort () {
+    function onabort () {
       reject(errors.OPERATION_ABORTED(signal.reason))
     }
   })

@@ -57,6 +57,65 @@ test('prepend new listener during emit', (t) => {
   t.alike(fired, [4, 1, 2, 3])
 })
 
+test('on', async (t) => {
+  const emitter = new EventEmitter()
+
+  queueMicrotask(() => {
+    emitter.emit('foo', 1)
+    emitter.emit('foo', 2)
+    emitter.emit('foo', 3)
+  })
+
+  let i = 0
+
+  for await (const args of EventEmitter.on(emitter, 'foo')) {
+    t.alike(args, [++i])
+
+    if (i === 3) break
+  }
+})
+
+test('on signal + abort', { skip: isBare }, async (t) => {
+  const emitter = new EventEmitter()
+  const controller = new AbortController()
+
+  const iterator = EventEmitter.on(emitter, 'foo', { signal: controller.signal })
+
+  controller.abort()
+
+  await t.exception(iterator.next())
+})
+
+test('once signal + abort reason', { skip: isBare }, async (t) => {
+  const emitter = new EventEmitter()
+  const controller = new AbortController()
+
+  const iterator = EventEmitter.on(emitter, 'foo', { signal: controller.signal })
+
+  controller.abort(new Error('cancel'))
+
+  try {
+    await iterator.next()
+    t.fail('should abort')
+  } catch (err) {
+    t.is(err.cause.message, 'cancel')
+  }
+})
+
+test('once signal + already aborted', { skip: isBare }, async (t) => {
+  const emitter = new EventEmitter()
+  const controller = new AbortController()
+
+  controller.abort(new Error('cancel'))
+
+  try {
+    EventEmitter.on(emitter, 'foo', { signal: controller.signal })
+    t.fail('should abort')
+  } catch (err) {
+    t.is(err.cause.message, 'cancel')
+  }
+})
+
 test('once', async (t) => {
   const emitter = new EventEmitter()
 
@@ -100,10 +159,8 @@ test('once signal + already aborted', { skip: isBare }, async (t) => {
 
   controller.abort(new Error('cancel'))
 
-  const promise = EventEmitter.once(emitter, 'hello', { signal: controller.signal })
-
   try {
-    await promise
+    EventEmitter.once(emitter, 'hello', { signal: controller.signal })
     t.fail('should abort')
   } catch (err) {
     t.is(err.cause.message, 'cancel')
