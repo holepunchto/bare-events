@@ -86,7 +86,7 @@ test('on signal + abort', { skip: isBare }, async (t) => {
   await t.exception(iterator.next())
 })
 
-test('once signal + abort reason', { skip: isBare }, async (t) => {
+test('on signal + abort reason', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -102,7 +102,7 @@ test('once signal + abort reason', { skip: isBare }, async (t) => {
   }
 })
 
-test('once signal + already aborted', { skip: isBare }, async (t) => {
+test('on signal + already aborted', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
