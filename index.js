@@ -112,6 +112,22 @@ module.exports = exports = class EventEmitter {
   }
 
   emit (name, ...args) {
+    if (name === 'error' && this._events.error === undefined) {
+      let err
+
+      if (args.length > 0) err = args[0]
+
+      if (err instanceof Error === false) err = errors.UNHANDLED_ERROR(err)
+
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(err, EventEmitter.prototype.emit)
+      }
+
+      // Make sure that exceptions are reported as normal uncaughts, not
+      // promise rejections.
+      setTimeout(() => { throw err }, 0)
+    }
+
     const e = this._events[name]
     return e === undefined ? false : e.emit(this, name, ...args)
   }

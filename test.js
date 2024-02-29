@@ -1,3 +1,4 @@
+/* global Bare */
 const test = require('brittle')
 const EventEmitter = require('.')
 
@@ -249,4 +250,30 @@ test('remove all with name triggers listener events', (t) => {
 
   emitter.emit('foo')
   emitter.emit('bar')
+})
+
+test('emit error with error listener', (t) => {
+  t.plan(2)
+
+  const emitter = new EventEmitter()
+
+  emitter.on('error', (err) => {
+    t.comment(err)
+    t.ok(err)
+  })
+
+  t.is(emitter.emit('error', new Error('Foo')), true)
+})
+
+test('emit error without error listener', (t) => {
+  t.plan(2)
+
+  const emitter = new EventEmitter()
+
+  Bare.once('uncaughtException', (err) => {
+    t.comment(err)
+    t.ok(err)
+  })
+
+  t.is(emitter.emit('error', new Error('Foo')), false)
 })
