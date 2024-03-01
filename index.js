@@ -85,8 +85,6 @@ function throwUnhandledError (...args) {
     Error.captureStackTrace(err, exports.prototype.emit)
   }
 
-  // Make sure that exceptions are reported as normal uncaughts, not
-  // promise rejections.
   queueMicrotask(() => { throw err })
 }
 
