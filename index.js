@@ -87,7 +87,7 @@ function throwUnhandledError (...args) {
 
   // Make sure that exceptions are reported as normal uncaughts, not
   // promise rejections.
-  setImmediate(() => { throw err })
+  queueMicrotask(() => { throw err })
 }
 
 module.exports = exports = class EventEmitter {
