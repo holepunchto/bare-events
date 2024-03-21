@@ -3,14 +3,17 @@ const errors = require('./lib/errors')
 class EventListener {
   constructor () {
     this.list = []
+    this.count = 0
   }
 
   append (ctx, name, fn, once) {
+    this.count++
     ctx.emit('newListener', name, fn) // Emit BEFORE adding
     this.list.push([fn, once])
   }
 
   prepend (ctx, name, fn, once) {
+    this.count++
     ctx.emit('newListener', name, fn) // Emit BEFORE adding
     this.list.unshift([fn, once])
   }
@@ -22,9 +25,11 @@ class EventListener {
       if (l[0] === fn) {
         this.list.splice(i, 1)
 
-        if (this.list.length === 0) delete ctx._events[name]
+        if (this.count == 1) delete ctx._events[name]
 
         ctx.emit('removeListener', name, fn) // Emit AFTER removing
+
+        this.count--
         return
       }
     }
@@ -34,11 +39,13 @@ class EventListener {
     const list = [...this.list]
     this.list = []
 
+    if (this.count === list.length) delete ctx._events[name]
+
     for (let i = list.length - 1; i >= 0; i--) {
       ctx.emit('removeListener', name, list[i][0]) // Emit AFTER removing
     }
 
-    if (this.list.length === 0) delete ctx._events[name]
+    this.count -= list.length
   }
 
   emit (ctx, name, ...args) {
