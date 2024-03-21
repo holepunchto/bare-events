@@ -25,7 +25,7 @@ class EventListener {
       if (l[0] === fn) {
         this.list.splice(i, 1)
 
-        if (this.count == 1) delete ctx._events[name]
+        if (this.count === 1) delete ctx._events[name]
 
         ctx.emit('removeListener', name, fn) // Emit AFTER removing
 
