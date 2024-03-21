@@ -1,6 +1,6 @@
 {
   "name": "bare-events",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Event emitters for JavaScript",
   "main": "index.js",
   "files": [
