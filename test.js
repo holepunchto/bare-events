@@ -58,6 +58,27 @@ test('prepend new listener during emit', (t) => {
   t.alike(fired, [4, 1, 2, 3])
 })
 
+test('remove listener during new listener event', (t) => {
+  const emitter = new EventEmitter()
+  const fired = []
+
+  emitter
+    .on('hello', a)
+    .on('newListener', () => emitter.off('hello', a))
+    .on('hello', b)
+    .emit('hello')
+
+  t.alike(fired, ['b'])
+
+  function a () {
+    fired.push('a')
+  }
+
+  function b () {
+    fired.push('b')
+  }
+})
+
 test('on', async (t) => {
   const emitter = new EventEmitter()
 
