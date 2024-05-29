@@ -288,3 +288,36 @@ exports.once = function once (emitter, name, opts = {}) {
     }
   })
 }
+
+exports.forward = function forward (from, to, ...names) {
+  let opts = names.pop()
+
+  if (typeof opts === 'string') {
+    names.push(opts)
+    opts = {}
+  }
+
+  const {
+    emit = to.emit.bind(to)
+  } = opts
+
+  const listeners = names.map((name) => function onevent (...args) {
+    emit(name, ...args)
+  })
+
+  to
+    .on('newListener', (name) => {
+      const i = names.indexOf(name)
+
+      if (i !== -1 && to.listenerCount(name) === 0) {
+        from.on(name, listeners[i])
+      }
+    })
+    .on('removeListener', (name) => {
+      const i = names.indexOf(name)
+
+      if (i !== -1 && to.listenerCount(name) === 0) {
+        from.off(name, listeners[i])
+      }
+    })
+}

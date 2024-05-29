@@ -298,3 +298,38 @@ test('emit error without error listener', (t) => {
 
   t.is(emitter.emit('error', new Error('Foo')), false)
 })
+
+test('forward', (t) => {
+  t.plan(2)
+
+  const a = new EventEmitter()
+  const b = new EventEmitter()
+
+  EventEmitter.forward(a, b, 'foo', 'bar')
+
+  b.once('foo', (n) => t.is(n, 1))
+  b.once('bar', (n) => t.is(n, 2))
+
+  a.emit('foo', 1)
+  a.emit('bar', 2)
+})
+
+test('forward with custom emit', (t) => {
+  t.plan(4)
+
+  const a = new EventEmitter()
+  const b = new EventEmitter()
+
+  EventEmitter.forward(a, b, 'foo', 'bar', {
+    emit (name, n) {
+      t.pass()
+      b.emit(name, n * 2)
+    }
+  })
+
+  b.once('foo', (n) => t.is(n, 2))
+  b.once('bar', (n) => t.is(n, 4))
+
+  a.emit('foo', 1)
+  a.emit('bar', 2)
+})
