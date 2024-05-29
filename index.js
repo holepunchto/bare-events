@@ -289,13 +289,8 @@ exports.once = function once (emitter, name, opts = {}) {
   })
 }
 
-exports.forward = function forward (from, to, ...names) {
-  let opts = names.pop()
-
-  if (typeof opts === 'string') {
-    names.push(opts)
-    opts = {}
-  }
+exports.forward = function forward (from, to, names, opts = {}) {
+  if (typeof names === 'string') names = [names]
 
   const {
     emit = to.emit.bind(to)

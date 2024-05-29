@@ -305,7 +305,7 @@ test('forward', (t) => {
   const a = new EventEmitter()
   const b = new EventEmitter()
 
-  EventEmitter.forward(a, b, 'foo', 'bar')
+  EventEmitter.forward(a, b, ['foo', 'bar'])
 
   b.once('foo', (n) => t.is(n, 1))
   b.once('bar', (n) => t.is(n, 2))
@@ -320,7 +320,7 @@ test('forward with custom emit', (t) => {
   const a = new EventEmitter()
   const b = new EventEmitter()
 
-  EventEmitter.forward(a, b, 'foo', 'bar', {
+  EventEmitter.forward(a, b, ['foo', 'bar'], {
     emit (name, n) {
       t.pass()
       b.emit(name, n * 2)
