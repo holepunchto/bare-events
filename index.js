@@ -171,6 +171,8 @@ module.exports = exports = class EventEmitter {
 
 exports.EventEmitter = exports
 
+exports.errors = errors
+
 exports.defaultMaxListeners = 10
 
 exports.on = function on (emitter, name, opts = {}) {
