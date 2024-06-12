@@ -270,18 +270,26 @@ exports.once = function once (emitter, name, opts = {}) {
     signal
   } = opts
 
-  if (signal && signal.aborted) {
-    throw errors.OPERATION_ABORTED(signal.reason)
-  }
-
   return new Promise((resolve, reject) => {
+    if (signal && signal.aborted) {
+      return reject(errors.OPERATION_ABORTED(signal.reason))
+    }
+
     if (signal) signal.addEventListener('abort', onabort)
+
+    if (name !== 'error') emitter.on('error', onerror)
 
     emitter.once(name, (...args) => {
       if (signal) signal.removeEventListener('abort', onabort)
 
+      if (name !== 'error') emitter.off('error', onerror)
+
       resolve(args)
     })
+
+    function onerror (err) {
+      reject(err)
+    }
 
     function onabort () {
       reject(errors.OPERATION_ABORTED(signal.reason))

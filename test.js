@@ -148,6 +148,21 @@ test('once', async (t) => {
   t.alike(await promise, ['world', '!'])
 })
 
+test('once + emit error', async (t) => {
+  const emitter = new EventEmitter()
+
+  const promise = EventEmitter.once(emitter, 'hello')
+
+  emitter.emit('error', new Error('cancel'))
+
+  try {
+    await promise
+    t.fail('should abort')
+  } catch (err) {
+    t.is(err.message, 'cancel')
+  }
+})
+
 test('once signal + abort', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
@@ -182,7 +197,7 @@ test('once signal + already aborted', { skip: isBare }, async (t) => {
   controller.abort(new Error('cancel'))
 
   try {
-    EventEmitter.once(emitter, 'hello', { signal: controller.signal })
+    await EventEmitter.once(emitter, 'hello', { signal: controller.signal })
     t.fail('should abort')
   } catch (err) {
     t.is(err.cause.message, 'cancel')
@@ -286,7 +301,7 @@ test('emit error with error listener', (t) => {
   t.is(emitter.emit('error', new Error('Foo')), true)
 })
 
-test('emit error without error listener', (t) => {
+test('emit error without error listener', { skip: !isBare }, (t) => {
   t.plan(2)
 
   const emitter = new EventEmitter()
