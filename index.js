@@ -288,10 +288,14 @@ exports.once = function once (emitter, name, opts = {}) {
     })
 
     function onerror (err) {
+      emitter.off('error', onerror)
+
       reject(err)
     }
 
     function onabort () {
+      signal.removeEventListener('abort', onabort)
+
       reject(errors.OPERATION_ABORTED(signal.reason))
     }
   })
