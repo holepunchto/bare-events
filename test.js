@@ -348,3 +348,22 @@ test('forward with custom emit', (t) => {
   a.emit('foo', 1)
   a.emit('bar', 2)
 })
+
+test('static listenerCount', (t) => {
+  t.plan(3)
+
+  const emitter = new EventEmitter()
+  const noop = () => {}
+
+  t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
+
+  emitter
+    .once('foo', noop)
+    .once('foo', noop)
+
+  t.is(EventEmitter.listenerCount(emitter, 'foo'), 2)
+
+  emitter.emit('foo')
+
+  t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
+})
