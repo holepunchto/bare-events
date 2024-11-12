@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/holepunchto/bare-events#readme",
   "devDependencies": {
+    "bare-utils": "^1.1.1",
     "brittle": "^3.3.2",
     "standard": "^17.0.0"
   }

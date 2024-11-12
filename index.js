@@ -64,18 +64,24 @@ class EventListener {
 }
 
 function appendListener (ctx, name, fn, once) {
+  if (!ctx._events) ctx._events = Object.create(null)
+
   const e = ctx._events[name] || (ctx._events[name] = new EventListener())
   e.append(ctx, name, fn, once)
   return ctx
 }
 
 function prependListener (ctx, name, fn, once) {
+  if (!ctx._events) ctx._events = Object.create(null)
+
   const e = ctx._events[name] || (ctx._events[name] = new EventListener())
   e.prepend(ctx, name, fn, once)
   return ctx
 }
 
 function removeListener (ctx, name, fn) {
+  if (!ctx._events) ctx._events = Object.create(null)
+
   const e = ctx._events[name]
   if (e !== undefined) e.remove(ctx, name, fn)
   return ctx
@@ -133,17 +139,23 @@ module.exports = exports = class EventEmitter {
   }
 
   emit (name, ...args) {
+    if (!this._events) this._events = Object.create(null)
+
     if (name === 'error' && this._events.error === undefined) throwUnhandledError(...args)
     const e = this._events[name]
     return e === undefined ? false : e.emit(this, name, ...args)
   }
 
   listeners (name) {
+    if (!this._events) this._events = Object.create(null)
+
     const e = this._events[name]
     return e === undefined ? [] : [...e.list]
   }
 
   listenerCount (name) {
+    if (!this._events) this._events = Object.create(null)
+
     const e = this._events[name]
     return e === undefined ? 0 : e.list.length
   }
@@ -155,6 +167,8 @@ module.exports = exports = class EventEmitter {
   setMaxListeners (n) {}
 
   removeAllListeners (name) {
+    if (!this._events) this._events = Object.create(null)
+
     if (arguments.length === 0) {
       for (const key of Reflect.ownKeys(this._events)) {
         if (key === 'removeListener') continue

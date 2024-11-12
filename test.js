@@ -367,3 +367,25 @@ test('static listenerCount', (t) => {
 
   t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
 })
+
+test('create a new emitter using utils.inherits', (t) => {
+  t.plan(1)
+
+  const utilsPath = isBare ? 'bare-utils' : 'node:util'
+  const { inherits } = require(utilsPath)
+
+  function MyEmitter () {}
+  inherits(MyEmitter, EventEmitter)
+
+  function noop () {}
+
+  new MyEmitter().addListener('foo', noop)
+  new MyEmitter().prependListener('foo', noop)
+  new MyEmitter().removeListener('foo', noop)
+  new MyEmitter().removeAllListeners('foo')
+  new MyEmitter().emit('foo')
+  new MyEmitter().listeners('foo')
+  new MyEmitter().listenerCount('foo')
+
+  t.pass()
+})
