@@ -25,9 +25,16 @@ test('add new listener during emit', (t) => {
   const fired = []
 
   emitter
-    .on('hello', () => { fired.push(1) })
-    .on('hello', () => { fired.push(2); emitter.addListener('hello', () => fired.push(4)) })
-    .on('hello', () => { fired.push(3) })
+    .on('hello', () => {
+      fired.push(1)
+    })
+    .on('hello', () => {
+      fired.push(2)
+      emitter.addListener('hello', () => fired.push(4))
+    })
+    .on('hello', () => {
+      fired.push(3)
+    })
     .emit('hello')
 
   t.alike(fired, [1, 2, 3])
@@ -44,9 +51,16 @@ test('prepend new listener during emit', (t) => {
   const fired = []
 
   emitter
-    .on('hello', () => { fired.push(1) })
-    .on('hello', () => { fired.push(2); emitter.prependListener('hello', () => fired.push(4)) })
-    .on('hello', () => { fired.push(3) })
+    .on('hello', () => {
+      fired.push(1)
+    })
+    .on('hello', () => {
+      fired.push(2)
+      emitter.prependListener('hello', () => fired.push(4))
+    })
+    .on('hello', () => {
+      fired.push(3)
+    })
     .emit('hello')
 
   t.alike(fired, [1, 2, 3])
@@ -70,11 +84,11 @@ test('remove listener during new listener event', (t) => {
 
   t.alike(fired, ['b'])
 
-  function a () {
+  function a() {
     fired.push('a')
   }
 
-  function b () {
+  function b() {
     fired.push('b')
   }
 })
@@ -101,7 +115,9 @@ test('on signal + abort', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
-  const iterator = EventEmitter.on(emitter, 'foo', { signal: controller.signal })
+  const iterator = EventEmitter.on(emitter, 'foo', {
+    signal: controller.signal
+  })
 
   controller.abort()
 
@@ -112,7 +128,9 @@ test('on signal + abort reason', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
-  const iterator = EventEmitter.on(emitter, 'foo', { signal: controller.signal })
+  const iterator = EventEmitter.on(emitter, 'foo', {
+    signal: controller.signal
+  })
 
   controller.abort(new Error('cancel'))
 
@@ -167,7 +185,9 @@ test('once signal + abort', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
-  const promise = EventEmitter.once(emitter, 'hello', { signal: controller.signal })
+  const promise = EventEmitter.once(emitter, 'hello', {
+    signal: controller.signal
+  })
 
   controller.abort()
 
@@ -178,7 +198,9 @@ test('once signal + abort reason', { skip: isBare }, async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
-  const promise = EventEmitter.once(emitter, 'hello', { signal: controller.signal })
+  const promise = EventEmitter.once(emitter, 'hello', {
+    signal: controller.signal
+  })
 
   controller.abort(new Error('cancel'))
 
@@ -215,9 +237,7 @@ test('once triggers listener events', (t) => {
     .on('removeListener', (...args) => t.alike(args, ['hello', fn]))
     .on('newListener', (...args) => t.alike(args, ['hello', fn]))
 
-  emitter
-    .once('hello', fn)
-    .emit('hello')
+  emitter.once('hello', fn).emit('hello')
 })
 
 test('reentrant emit from once', (t) => {
@@ -226,7 +246,10 @@ test('reentrant emit from once', (t) => {
 
   emitter
     .on('hello', () => fired.push(1))
-    .once('hello', () => { fired.push(2); emitter.emit('hello') })
+    .once('hello', () => {
+      fired.push(2)
+      emitter.emit('hello')
+    })
     .emit('hello')
 
   t.alike(fired, [1, 2, 1])
@@ -336,7 +359,7 @@ test('forward with custom emit', (t) => {
   const b = new EventEmitter()
 
   EventEmitter.forward(a, b, ['foo', 'bar'], {
-    emit (name, n) {
+    emit(name, n) {
       t.pass()
       b.emit(name, n * 2)
     }
@@ -357,9 +380,7 @@ test('static listenerCount', (t) => {
 
   t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
 
-  emitter
-    .once('foo', noop)
-    .once('foo', noop)
+  emitter.once('foo', noop).once('foo', noop)
 
   t.is(EventEmitter.listenerCount(emitter, 'foo'), 2)
 
