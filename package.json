@@ -3,12 +3,16 @@
   "version": "2.5.0",
   "description": "Event emitters for JavaScript",
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
     "./package": "./package.json",
     "./errors": "./lib/errors.js"
   },
   "files": [
     "index.js",
+    "index.d.ts",
     "lib"
   ],
   "scripts": {
