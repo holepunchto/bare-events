@@ -1,6 +1,4 @@
 declare class EventEmitter {
-  static EventEmitter: typeof EventEmitter
-
   addListener(name: string | symbol, fn: Function): this
   addOnceListener(name: string | symbol, fn: Function): this
 
@@ -55,7 +53,7 @@ declare namespace EventEmitter {
     static UNHANDLED_ERROR(cause: any, msg?: string): EventEmitterError
   }
 
-  export const errors: typeof EventEmitterError
+  export { EventEmitter, EventEmitterError as errors }
 }
 
 export = EventEmitter
