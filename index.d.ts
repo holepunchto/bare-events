@@ -28,7 +28,7 @@ declare namespace EventEmitter {
     emitter: EventEmitter,
     name: string | symbol,
     opts?: { signal?: AbortSignal }
-  ): IterableIterator<any[]>
+  ): AsyncIterableIterator<any[]>
 
   export function once(
     emitter: EventEmitter,
