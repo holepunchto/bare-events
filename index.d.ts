@@ -12,7 +12,7 @@ declare class EventEmitter {
   once(name: string | symbol, fn: Function): this
   off(name: string | symbol, fn: Function): this
 
-  emit(name: string | symbol, ...args: any[]): boolean
+  emit(name: string | symbol, ...args: unknown[]): boolean
 
   listeners(name: string | symbol): Function[]
   listenerCount(name: string | symbol): number
@@ -26,19 +26,19 @@ declare namespace EventEmitter {
     emitter: EventEmitter,
     name: string | symbol,
     opts?: { signal?: AbortSignal }
-  ): AsyncIterableIterator<any[]>
+  ): AsyncIterableIterator<unknown[]>
 
   export function once(
     emitter: EventEmitter,
     name: string | symbol,
     opts?: { signal?: AbortSignal }
-  ): Promise<any>
+  ): Promise<unknown>
 
   export function forward(
     from: EventEmitter,
     to: EventEmitter,
     names: string | string[] | symbol[],
-    opts?: { emit?: (name: string, ...args: any[]) => void }
+    opts?: { emit?: (name: string, ...args: unknown[]) => void }
   ): void
 
   export function listenerCount(
@@ -49,8 +49,8 @@ declare namespace EventEmitter {
   export let defaultMaxListeners: number
 
   class EventEmitterError extends Error {
-    static OPERATION_ABORTED(cause: any, msg?: string): EventEmitterError
-    static UNHANDLED_ERROR(cause: any, msg?: string): EventEmitterError
+    static OPERATION_ABORTED(cause: Error, msg?: string): EventEmitterError
+    static UNHANDLED_ERROR(cause: Error, msg?: string): EventEmitterError
   }
 
   export { EventEmitter, EventEmitterError as errors }
