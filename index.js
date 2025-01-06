@@ -135,8 +135,10 @@ module.exports = exports = class EventEmitter {
   }
 
   emit(name, ...args) {
-    if (name === 'error' && this._events.error === undefined)
+    if (name === 'error' && this._events.error === undefined) {
       throwUnhandledError(...args)
+    }
+
     const e = this._events[name]
     return e === undefined ? false : e.emit(this, name, ...args)
   }
