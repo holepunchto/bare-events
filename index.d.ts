@@ -9,7 +9,7 @@ declare interface EventHandler<
   (...args: A): R
 }
 
-declare class EventEmitter<in out M extends EventMap> {
+declare class EventEmitter<in out M extends EventMap = EventMap> {
   addListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
   addOnceListener<E extends keyof M, R>(
