@@ -1,49 +1,79 @@
-declare class EventEmitter {
-  addListener(name: string | symbol, fn: Function): this
-  addOnceListener(name: string | symbol, fn: Function): this
+declare interface EventMap {
+  [event: string | symbol]: unknown[]
+}
 
-  prependListener(name: string | symbol, fn: Function): this
-  prependOnceListener(name: string | symbol, fn: Function): this
+declare interface EventHandler<
+  in A extends unknown[] = unknown[],
+  out R = unknown
+> {
+  (...args: A): R
+}
 
-  removeListener(name: string | symbol, fn: Function): this
-  removeAllListeners(name?: string | symbol): this
+declare class EventEmitter<in out M extends EventMap> {
+  addListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
-  on(name: string | symbol, fn: Function): this
-  once(name: string | symbol, fn: Function): this
-  off(name: string | symbol, fn: Function): this
+  addOnceListener<E extends keyof M, R>(
+    name: E,
+    fn: EventHandler<M[E], R>
+  ): this
 
-  emit(name: string | symbol, ...args: unknown[]): boolean
+  prependListener<E extends keyof M, R>(
+    name: E,
+    fn: EventHandler<M[E], R>
+  ): this
 
-  listeners(name: string | symbol): Function[]
-  listenerCount(name: string | symbol): number
+  prependOnceListener<E extends keyof M, R>(
+    name: E,
+    fn: EventHandler<M[E], R>
+  ): this
+
+  removeListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+
+  removeAllListeners<E extends keyof M>(name?: E): this
+
+  on<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+
+  once<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+
+  off<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+
+  emit<E extends keyof M>(name: E, ...args: M[E]): boolean
+
+  listeners<E extends keyof M, R>(name: E): EventHandler<M[E], R>
+
+  listenerCount<E extends keyof M>(name: E): number
 
   getMaxListeners(): number
   setMaxListeners(n: number): void
 }
 
 declare namespace EventEmitter {
-  export function on(
-    emitter: EventEmitter,
-    name: string | symbol,
+  export function on<M extends EventMap, E extends keyof M>(
+    emitter: EventEmitter<M>,
+    name: E,
     opts?: { signal?: AbortSignal }
-  ): AsyncIterableIterator<unknown[]>
+  ): AsyncIterableIterator<M[E]>
 
-  export function once(
-    emitter: EventEmitter,
-    name: string | symbol,
+  export function once<M extends EventMap, E extends keyof M>(
+    emitter: EventEmitter<M>,
+    name: E,
     opts?: { signal?: AbortSignal }
-  ): Promise<unknown>
+  ): Promise<M[E]>
 
-  export function forward(
-    from: EventEmitter,
-    to: EventEmitter,
-    names: string | string[] | symbol[],
-    opts?: { emit?: (name: string, ...args: unknown[]) => void }
+  export function forward<
+    F extends EventMap,
+    E extends keyof F,
+    T extends Pick<F, E>
+  >(
+    from: EventEmitter<F>,
+    to: EventEmitter<T>,
+    names: E | E[],
+    opts?: { emit?: (name: E, ...args: T[E]) => void }
   ): void
 
-  export function listenerCount(
-    emitter: EventEmitter,
-    name: string | symbol
+  export function listenerCount<M extends EventMap, E extends keyof M>(
+    emitter: EventEmitter<M>,
+    name: E
   ): number
 
   export let defaultMaxListeners: number
