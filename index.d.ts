@@ -9,7 +9,12 @@ declare interface EventHandler<
   (...args: A): R
 }
 
-declare class EventEmitter<in out M extends EventMap = EventMap> {
+declare class EventEmitterError extends Error {
+  static OPERATION_ABORTED(cause: Error, msg?: string): EventEmitterError
+  static UNHANDLED_ERROR(cause: Error, msg?: string): EventEmitterError
+}
+
+declare interface EventEmitter<in out M extends EventMap = EventMap> {
   addListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
   addOnceListener<E extends keyof M, R>(
@@ -47,6 +52,8 @@ declare class EventEmitter<in out M extends EventMap = EventMap> {
   setMaxListeners(n: number): void
 }
 
+declare class EventEmitter<in out M extends EventMap = EventMap> {}
+
 declare namespace EventEmitter {
   export function on<M extends EventMap, E extends keyof M>(
     emitter: EventEmitter<M>,
@@ -77,11 +84,6 @@ declare namespace EventEmitter {
   ): number
 
   export let defaultMaxListeners: number
-
-  class EventEmitterError extends Error {
-    static OPERATION_ABORTED(cause: Error, msg?: string): EventEmitterError
-    static UNHANDLED_ERROR(cause: Error, msg?: string): EventEmitterError
-  }
 
   export { EventEmitter, EventEmitterError as errors }
 }
