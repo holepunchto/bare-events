@@ -85,7 +85,7 @@ declare namespace EventEmitter {
 
   export let defaultMaxListeners: number
 
-  export { EventEmitter, EventEmitterError as errors }
+  export { EventEmitter, EventEmitterError as errors, EventMap, EventHandler }
 }
 
 export = EventEmitter
