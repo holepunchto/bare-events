@@ -80,6 +80,10 @@ declare namespace EventEmitter {
     name: E
   ): number
 
+  export function getMaxListeners(emitter: EventEmitter): number
+
+  export function setMaxListeners(n: number, ...emitters: EventEmitter[]): void
+
   export let defaultMaxListeners: number
 
   export { EventEmitter, EventEmitterError as errors, EventMap, EventHandler }
