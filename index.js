@@ -336,14 +336,20 @@ exports.listenerCount = function listenerCount(emitter, name) {
 }
 
 exports.getMaxListeners = function getMaxListeners(emitter) {
-  return emitter.getMaxListeners()
+  if (typeof emitter.getMaxListeners === 'function') {
+    return emitter.getMaxListeners()
+  }
+
+  return exports.defaultMaxListeners
 }
 
 exports.setMaxListeners = function setMaxListeners(n, ...emitters) {
   if (emitters.length === 0) exports.defaultMaxListeners = n
   else {
     for (const emitter of emitters) {
-      emitter.setMaxListeners(n)
+      if (typeof emitter.setMaxListeners === 'function') {
+        emitter.setMaxListeners(n)
+      }
     }
   }
 }
