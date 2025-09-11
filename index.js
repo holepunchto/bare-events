@@ -172,16 +172,6 @@ module.exports = exports = class EventEmitter {
     }
     return this
   }
-
-  toJSON() {
-    return {}
-  }
-
-  [Symbol.for('bare.inspect')]() {
-    return {
-      __proto__: { constructor: EventEmitter }
-    }
-  }
 }
 
 exports.EventEmitter = exports
