@@ -3,16 +3,28 @@
   "version": "2.6.1",
   "description": "Event emitters for JavaScript",
   "exports": {
+    "./package": "./package.json",
     ".": {
       "types": "./index.d.ts",
       "default": "./index.js"
     },
-    "./package": "./package.json",
+    "./global": {
+      "types": "./global.d.ts",
+      "default": "./global.js"
+    },
+    "./web": {
+      "types": "./web.d.ts",
+      "default": "./web.js"
+    },
     "./errors": "./lib/errors.js"
   },
   "files": [
     "index.js",
     "index.d.ts",
+    "global.js",
+    "global.d.ts",
+    "web.js",
+    "web.d.ts",
     "lib"
   ],
   "scripts": {

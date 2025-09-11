@@ -56,7 +56,7 @@ class EventListener {
 
       if (l[1] === true) this.remove(ctx, name, l[0])
 
-      l[0].call(ctx, ...args)
+      Reflect.apply(l[0], ctx, args)
     }
 
     return list.length > 0
@@ -171,6 +171,16 @@ module.exports = exports = class EventEmitter {
       if (e !== undefined) e.removeAll(this, name)
     }
     return this
+  }
+
+  toJSON() {
+    return {}
+  }
+
+  [Symbol.for('bare.inspect')]() {
+    return {
+      __proto__: { constructor: EventEmitter }
+    }
   }
 }
 
