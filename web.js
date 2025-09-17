@@ -294,13 +294,12 @@ class EventListener {
   }
 
   *[Symbol.iterator]() {
-    const start = this
     let current = this
 
     while (true) {
       const next = current._next
       yield current
-      if (next === start) break
+      if (next === this) break
       current = next
     }
   }
