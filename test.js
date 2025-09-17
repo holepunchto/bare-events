@@ -1,4 +1,3 @@
-/* global Bare */
 const test = require('brittle')
 const EventEmitter = require('.')
 
