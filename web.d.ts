@@ -1,3 +1,5 @@
+interface AbortSignal extends EventTarget {}
+
 export interface EventOptions {
   bubbles?: boolean
   cancelable?: boolean
