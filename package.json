@@ -1,6 +1,6 @@
 {
   "name": "bare-events",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "Event emitters for JavaScript",
   "exports": {
     "./package": "./package.json",
