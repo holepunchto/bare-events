@@ -49,5 +49,13 @@
     "prettier": "^3.4.2",
     "prettier-config-standard": "^7.0.0",
     "uncaughts": "^1.1.1"
+  },
+  "peerDependencies": {
+    "bare-abort-controller": "*"
+  },
+  "peerDependenciesMeta": {
+    "bare-abort-controller": {
+      "optional": true
+    }
   }
 }
