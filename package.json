@@ -44,8 +44,10 @@
   },
   "homepage": "https://github.com/holepunchto/bare-events#readme",
   "devDependencies": {
+    "bare-abort-controller": "^1.0.0",
     "brittle": "^3.3.2",
     "prettier": "^3.4.2",
-    "prettier-config-standard": "^7.0.0"
+    "prettier-config-standard": "^7.0.0",
+    "uncaughts": "^1.1.1"
   }
 }

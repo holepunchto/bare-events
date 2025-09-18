@@ -1,7 +1,7 @@
 const test = require('brittle')
+const uncaughts = require('uncaughts')
+const AbortController = require('bare-abort-controller')
 const EventEmitter = require('.')
-
-const isBare = typeof Bare !== 'undefined'
 
 test('new listener event fires before adding', (t) => {
   const emitter = new EventEmitter()
@@ -110,7 +110,7 @@ test('on', async (t) => {
   }
 })
 
-test('on signal + abort', { skip: isBare }, async (t) => {
+test('on signal + abort', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -123,7 +123,7 @@ test('on signal + abort', { skip: isBare }, async (t) => {
   await t.exception(iterator.next())
 })
 
-test('on signal + abort reason', { skip: isBare }, async (t) => {
+test('on signal + abort reason', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -141,7 +141,7 @@ test('on signal + abort reason', { skip: isBare }, async (t) => {
   }
 })
 
-test('on signal + already aborted', { skip: isBare }, async (t) => {
+test('on signal + already aborted', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -180,7 +180,7 @@ test('once + emit error', async (t) => {
   }
 })
 
-test('once signal + abort', { skip: isBare }, async (t) => {
+test('once signal + abort', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -193,7 +193,7 @@ test('once signal + abort', { skip: isBare }, async (t) => {
   await t.exception(promise)
 })
 
-test('once signal + abort reason', { skip: isBare }, async (t) => {
+test('once signal + abort reason', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -211,7 +211,7 @@ test('once signal + abort reason', { skip: isBare }, async (t) => {
   }
 })
 
-test('once signal + already aborted', { skip: isBare }, async (t) => {
+test('once signal + already aborted', async (t) => {
   const emitter = new EventEmitter()
   const controller = new AbortController()
 
@@ -323,12 +323,12 @@ test('emit error with error listener', (t) => {
   t.is(emitter.emit('error', new Error('Foo')), true)
 })
 
-test('emit error without error listener', { skip: !isBare }, (t) => {
+test('emit error without error listener', (t) => {
   t.plan(2)
 
   const emitter = new EventEmitter()
 
-  Bare.once('uncaughtException', (err) => {
+  uncaughts.once((err) => {
     t.comment(err)
     t.ok(err)
   })
