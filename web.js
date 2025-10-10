@@ -12,7 +12,7 @@ const PASSIVE = 0x2
 const ONCE = 0x4
 
 // https://dom.spec.whatwg.org/#event
-exports.Event = class Event {
+class Event {
   // https://dom.spec.whatwg.org/#dom-event-event
   constructor(type, options = {}) {
     const { bubbles = false, cancelable = false, composed = false } = options
@@ -103,6 +103,24 @@ exports.Event = class Event {
       defaultPrevented: this.defaultPrevented,
       isTrusted: this.isTrusted
     }
+  }
+}
+
+exports.Event = Event
+
+// https://dom.spec.whatwg.org/#customevent
+exports.CustomEvent = class CustomEvent extends Event {
+  constructor(type, options = {}) {
+    super(type, options)
+
+    const { detail = null } = options
+
+    this._detail = detail
+  }
+
+  // https://dom.spec.whatwg.org/#dom-customevent-detail
+  get detail() {
+    return this._detail
   }
 }
 
