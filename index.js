@@ -215,9 +215,7 @@ exports.on = function on(emitter, name, opts = {}) {
 
       if (done) return onclose()
 
-      return new Promise((resolve, reject) =>
-        promises.push({ resolve, reject })
-      )
+      return new Promise((resolve, reject) => promises.push({ resolve, reject }))
     },
 
     return() {
