@@ -278,7 +278,7 @@ exports.once = function once(emitter, name, opts = {}) {
   const { signal } = opts
 
   if (signal && signal.aborted) {
-    throw errors.OPERATION_ABORTED(signal.reason)
+    return Promise.reject(errors.OPERATION_ABORTED(signal.reason))
   }
 
   return new Promise((resolve, reject) => {
