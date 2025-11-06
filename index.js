@@ -246,6 +246,8 @@ exports.on = function on(emitter, name, opts = {}) {
   }
 
   function onerror(err) {
+    emitter.off(name, onevent).off('error', onerror)
+
     if (promises.length) {
       promises.shift().reject(err)
     } else {
@@ -256,6 +258,8 @@ exports.on = function on(emitter, name, opts = {}) {
   }
 
   function onabort() {
+    signal.removeEventListener('abort', onabort)
+
     onerror(errors.OPERATION_ABORTED(signal.reason))
   }
 
@@ -297,14 +301,14 @@ exports.once = function once(emitter, name, opts = {}) {
     }
 
     function onerror(err) {
-      emitter.off('error', onerror)
+      emitter.off(name, onevent)
+
+      if (name !== 'error') emitter.off('error', onerror)
 
       reject(err)
     }
 
     function onabort() {
-      emitter.off(name, onevent)
-
       signal.removeEventListener('abort', onabort)
 
       onerror(errors.OPERATION_ABORTED(signal.reason))
