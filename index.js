@@ -199,11 +199,11 @@ exports.on = function on(emitter, name, opts = {}) {
   const events = []
   const promises = []
 
-  emitter.on(name, onevent)
-
   if (name !== 'error') emitter.on('error', onerror)
 
   if (signal) signal.addEventListener('abort', onabort)
+
+  emitter.on(name, onevent)
 
   return {
     next() {
