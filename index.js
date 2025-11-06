@@ -286,13 +286,15 @@ exports.once = function once(emitter, name, opts = {}) {
 
     if (signal) signal.addEventListener('abort', onabort)
 
-    emitter.once(name, (...args) => {
+    emitter.once(name, onevent)
+
+    function onevent(...args) {
       if (name !== 'error') emitter.off('error', onerror)
 
       if (signal) signal.removeEventListener('abort', onabort)
 
       resolve(args)
-    })
+    }
 
     function onerror(err) {
       emitter.off('error', onerror)
@@ -301,6 +303,8 @@ exports.once = function once(emitter, name, opts = {}) {
     }
 
     function onabort() {
+      emitter.off(name, onevent)
+
       signal.removeEventListener('abort', onabort)
 
       onerror(errors.OPERATION_ABORTED(signal.reason))
