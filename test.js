@@ -2,6 +2,7 @@ const test = require('brittle')
 const uncaughts = require('uncaughts')
 const AbortController = require('bare-abort-controller')
 const EventEmitter = require('.')
+const { Event, EventTarget } = require('./web')
 
 test('new listener event fires before adding', (t) => {
   const emitter = new EventEmitter()
@@ -386,4 +387,80 @@ test('static listenerCount', (t) => {
   emitter.emit('foo')
 
   t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
+})
+
+test('EventTarget remove listener during dispatch', (t) => {
+  const target = new EventTarget()
+  const fired = []
+
+  const a = () => {
+    fired.push('a')
+    target.removeEventListener('x', a)
+  }
+
+  target.addEventListener('x', a)
+  target.addEventListener('x', () => fired.push('b'))
+
+  target.dispatchEvent(new Event('x'))
+  target.dispatchEvent(new Event('x'))
+
+  t.alike(fired, ['a', 'b', 'b'])
+})
+
+test('EventTarget remove next listener during dispatch', (t) => {
+  const target = new EventTarget()
+  const fired = []
+
+  const b = () => fired.push('b')
+
+  target.addEventListener('x', () => {
+    fired.push('a')
+    target.removeEventListener('x', b)
+  })
+  target.addEventListener('x', b)
+
+  target.dispatchEvent(new Event('x'))
+
+  t.alike(fired, ['a'])
+})
+
+test('EventTarget once listener fires only once', (t) => {
+  const target = new EventTarget()
+  const fired = []
+
+  target.addEventListener('x', () => fired.push('a'), { once: true })
+
+  target.dispatchEvent(new Event('x'))
+  target.dispatchEvent(new Event('x'))
+
+  t.alike(fired, ['a'])
+})
+
+test('EventTarget once listener with sibling fires only once', (t) => {
+  const target = new EventTarget()
+  const fired = []
+
+  target.addEventListener('x', () => fired.push('a'), { once: true })
+  target.addEventListener('x', () => fired.push('b'))
+
+  target.dispatchEvent(new Event('x'))
+  target.dispatchEvent(new Event('x'))
+
+  t.alike(fired, ['a', 'b', 'b'])
+})
+
+test('EventTarget signal-aborted listener is removed', (t) => {
+  const target = new EventTarget()
+  const controller = new AbortController()
+  const fired = []
+
+  target.addEventListener('x', () => fired.push('keep'))
+  target.addEventListener('x', () => fired.push('drop'), {
+    signal: controller.signal
+  })
+
+  controller.abort()
+  target.dispatchEvent(new Event('x'))
+
+  t.alike(fired, ['keep'])
 })
