@@ -389,6 +389,74 @@ test('static listenerCount', (t) => {
   t.is(EventEmitter.listenerCount(emitter, 'foo'), 0)
 })
 
+test('eventNames returns registered event names', (t) => {
+  const emitter = new EventEmitter()
+  const sym = Symbol('baz')
+
+  t.alike(emitter.eventNames(), [])
+
+  emitter.on('foo', () => {})
+  emitter.on('bar', () => {})
+  emitter.on(sym, () => {})
+
+  t.alike(emitter.eventNames(), ['foo', 'bar', sym])
+})
+
+test('eventNames updates as listeners are removed', (t) => {
+  const emitter = new EventEmitter()
+  const fn = () => {}
+
+  emitter.on('foo', fn).on('bar', () => {})
+
+  t.alike(emitter.eventNames(), ['foo', 'bar'])
+
+  emitter.off('foo', fn)
+
+  t.alike(emitter.eventNames(), ['bar'])
+
+  emitter.removeAllListeners()
+
+  t.alike(emitter.eventNames(), [])
+})
+
+test('rawListeners returns listener functions', (t) => {
+  const emitter = new EventEmitter()
+  const a = () => {}
+  const b = () => {}
+
+  t.alike(emitter.rawListeners('foo'), [])
+
+  emitter.on('foo', a).on('foo', b)
+
+  t.alike(emitter.rawListeners('foo'), [a, b])
+})
+
+test('rawListeners includes once listeners', (t) => {
+  const emitter = new EventEmitter()
+  const a = () => {}
+  const b = () => {}
+
+  emitter.on('foo', a).once('foo', b)
+
+  t.alike(emitter.rawListeners('foo'), [a, b])
+
+  emitter.emit('foo')
+
+  t.alike(emitter.rawListeners('foo'), [a])
+})
+
+test('rawListeners returns a copy', (t) => {
+  const emitter = new EventEmitter()
+  const a = () => {}
+
+  emitter.on('foo', a)
+
+  const list = emitter.rawListeners('foo')
+  list.length = 0
+
+  t.alike(emitter.rawListeners('foo'), [a])
+})
+
 test('EventTarget remove listener during dispatch', (t) => {
   const target = new EventTarget()
   const fired = []
