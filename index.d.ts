@@ -8,33 +8,43 @@ interface EventHandler<in A extends unknown[] = unknown[], out R = unknown> {
   (...args: A): R
 }
 
-/** The error class used for emitter-internal errors, such as an unhandled `'error'` event or an aborted `events.on`/`events.once` wait. */
+/**
+ * The error class used for emitter-internal errors, such as an unhandled `'error'` event or an
+ * aborted `events.on`/`events.once` wait.
+ */
 declare class EventEmitterError extends Error {
   /**
-   * Create an `EventEmitterError` wrapping `cause`, used when an `AbortSignal` aborts a pending `events.on` or `events.once` wait.
+   * Create an `EventEmitterError` wrapping `cause`, used when an `AbortSignal` aborts a pending
+   * `events.on` or `events.once` wait.
    * @param cause - The abort reason wrapped by the error.
    * @param msg - An optional custom message for the wrapping error.
    */
   static OPERATION_ABORTED(cause: Error, msg?: string): EventEmitterError
   /**
-   * Create an `EventEmitterError` wrapping `cause`, used when an `'error'` event is emitted with no listeners attached.
+   * Create an `EventEmitterError` wrapping `cause`, used when an `'error'` event is emitted with no
+   * listeners attached.
    * @param cause - The underlying error wrapped by the error.
    * @param msg - An optional custom message for the wrapping error.
    */
   static UNHANDLED_ERROR(cause: Error, msg?: string): EventEmitterError
 }
 
-/** An emitter of named events to which listener functions can be attached, closely mirroring Node.js's `EventEmitter`. */
+/**
+ * An emitter of named events to which listener functions can be attached, closely mirroring
+ * Node.js's `EventEmitter`.
+ */
 interface EventEmitter<in out M extends EventMap = EventMap> {
   /**
-   * Add `fn` as a listener for `name`, called on every subsequent emit. Returns `this` for chaining.
+   * Add `fn` as a listener for `name`, called on every subsequent emit. Returns `this` for
+   * chaining.
    * @param name - The event name to listen for.
    * @param fn - The listener function, called with the event's arguments on each emit.
    */
   addListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
   /**
-   * Add `fn` as a listener for `name` that is removed after it fires once. Returns `this` for chaining.
+   * Add `fn` as a listener for `name` that is removed after it fires once. Returns `this` for
+   * chaining.
    * @param name - The event name to listen for.
    * @param fn - The listener function, called once with the event's arguments then removed.
    */
@@ -51,7 +61,8 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   /**
    * Like `addOnceListener`, but adds `fn` to the beginning of the listener list instead of the end.
    * @param name - The event name to listen for.
-   * @param fn - The listener function to add to the front of the listener list, removed after it fires once.
+   * @param fn - The listener function to add to the front of the listener list, removed after it
+   * fires once.
    * @returns The emitter itself, for chaining, like `addOnceListener`.
    */
   prependOnceListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
@@ -65,7 +76,8 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
 
   /**
    * Remove all listeners, or only those for `name` if given. Returns `this` for chaining.
-   * @param name - If given, remove listeners only for this event name; otherwise remove all listeners for every event.
+   * @param name - If given, remove listeners only for this event name; otherwise remove all
+   * listeners for every event.
    */
   removeAllListeners<E extends keyof M>(name?: E): this
 
@@ -80,7 +92,8 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   /**
    * @param emitter - The emitter to wait on.
    * @param name - The event name.
-   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an `EventEmitterError`.
+   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an
+   * `EventEmitterError`.
    * @param fn - The listener function, called once with the event's arguments then removed.
    */
   once<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
@@ -94,7 +107,9 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   off<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
   /**
-   * Synchronously call each listener registered for `name`, in registration order, with `args`. Returns `true` if there were listeners, `false` otherwise. Emitting `'error'` with no `'error'` listeners throws the error asynchronously instead of calling any listener.
+   * Synchronously call each listener registered for `name`, in registration order, with `args`.
+   * Returns `true` if there were listeners, `false` otherwise. Emitting `'error'` with no `'error'`
+   * listeners throws the error asynchronously instead of calling any listener.
    * @param name - The event name to emit.
    * @param args - Arguments passed to each listener registered for `name`.
    */
@@ -107,7 +122,8 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   listeners<E extends keyof M, R>(name: E): EventHandler<M[E], R>
 
   /**
-   * Return a copy of the listener array for `name`, including one-time wrapper listeners as registered.
+   * Return a copy of the listener array for `name`, including one-time wrapper listeners as
+   * registered.
    * @param name - The event name to return the raw listener array for.
    */
   rawListeners<E extends keyof M, R>(name: E): EventHandler<M[E], R>[]
@@ -124,12 +140,14 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
 
   /**
    * @param emitter - The emitter to query.
-   * @returns `EventEmitter.defaultMaxListeners`; bare-events does not track a per-instance limit separately.
+   * @returns `EventEmitter.defaultMaxListeners`; bare-events does not track a per-instance limit
+   * separately.
    */
   getMaxListeners(): number
   /**
    * @param n - The maximum number of listeners to allow.
-   * @param emitters - The emitters to apply the new limit to; if omitted, sets the global default instead.
+   * @param emitters - The emitters to apply the new limit to; if omitted, sets the global default
+   * instead.
    */
   setMaxListeners(n: number): void
 }
@@ -150,11 +168,13 @@ declare namespace EventEmitter {
   ): Promise<M[E]>
 
   /**
-   * Forward events named in `names` from `from` to `to`, re-emitting them on `to` only while `to` has at least one listener for that event.
+   * Forward events named in `names` from `from` to `to`, re-emitting them on `to` only while `to`
+   * has at least one listener for that event.
    * @param from - The emitter to forward events from.
    * @param to - The emitter to forward events to.
    * @param names - The event name, or array of event names, to forward.
-   * @param opts - Options; `emit` overrides how forwarded events are re-emitted on `to` (defaults to `to.emit`).
+   * @param opts - Options; `emit` overrides how forwarded events are re-emitted on `to` (defaults
+   * to `to.emit`).
    */
   export function forward<F extends EventMap, E extends keyof F, T extends Pick<F, E>>(
     from: EventEmitter<F>,

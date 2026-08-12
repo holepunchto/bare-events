@@ -51,7 +51,8 @@ export interface AddEventListenerOptions {
   /**
    * @param emitter - The emitter to wait on.
    * @param name - The event name.
-   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an `EventEmitterError`.
+   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an
+   * `EventEmitterError`.
    * @param fn - The listener function, called once with the event's arguments then removed.
    * @returns The emitter itself, for chaining — implemented identically to `addOnceListener`.
    */
@@ -67,7 +68,8 @@ export interface EventTarget {
   /**
    * @param type - The event type to listen for.
    * @param callback - The listener function, or an object with a `handleEvent` method.
-   * @param options - Options, or a boolean shorthand for `capture`; `once` removes the listener after it fires, `signal` removes it when the given `AbortSignal` aborts.
+   * @param options - Options, or a boolean shorthand for `capture`; `once` removes the listener
+   * after it fires, `signal` removes it when the given `AbortSignal` aborts.
    */
   addEventListener(
     type: string,
@@ -78,7 +80,8 @@ export interface EventTarget {
   /**
    * @param type - The event type to stop listening for.
    * @param callback - The listener to remove.
-   * @param options - Options, or a boolean shorthand for `capture`; must match the `capture` value passed to `addEventListener`.
+   * @param options - Options, or a boolean shorthand for `capture`; must match the `capture` value
+   * passed to `addEventListener`.
    */
   removeEventListener(
     type: string,
@@ -88,7 +91,8 @@ export interface EventTarget {
 
   /**
    * @param event - The event to dispatch to this target's listeners.
-   * @returns `false` if the event is cancelable and `preventDefault()` was called on it during dispatch, `true` otherwise.
+   * @returns `false` if the event is cancelable and `preventDefault()` was called on it during
+   * dispatch, `true` otherwise.
    */
   dispatchEvent(event: Event): boolean
 }
