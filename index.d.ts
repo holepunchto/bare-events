@@ -82,19 +82,18 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   removeAllListeners<E extends keyof M>(name?: E): this
 
   /**
-   * @param emitter - The emitter to iterate events from.
-   * @param name - The event name.
-   * @param opts - Options; `signal` aborts the iteration, rejecting it with an `EventEmitterError`.
+   * Alias for `addListener`.
+   * @param name - The event name to listen for.
    * @param fn - The listener function, called with the event's arguments on each emit.
+   * @returns The emitter itself, for chaining — implemented identically to `addListener`.
    */
   on<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
   /**
-   * @param emitter - The emitter to wait on.
-   * @param name - The event name.
-   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an
-   * `EventEmitterError`.
+   * Alias for `addOnceListener`.
+   * @param name - The event name to listen for.
    * @param fn - The listener function, called once with the event's arguments then removed.
+   * @returns The emitter itself, for chaining — implemented identically to `addOnceListener`.
    */
   once<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
 
@@ -132,22 +131,21 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
   eventNames(): (keyof M)[]
 
   /**
-   * Return the number of listeners registered for `name`.
-   * @param emitter - The emitter to query.
-   * @param name - The event name.
+   * Return the number of listeners registered for `name`, or `0` if there are none.
+   * @param name - The event name to count listeners for.
    */
   listenerCount<E extends keyof M>(name: E): number
 
   /**
-   * @param emitter - The emitter to query.
+   * Return the maximum number of listeners allowed for this emitter.
    * @returns `EventEmitter.defaultMaxListeners`; bare-events does not track a per-instance limit
    * separately.
    */
   getMaxListeners(): number
   /**
+   * Set the maximum number of listeners for this emitter. Accepted for compatibility, but the
+   * limit is not recorded and the call has no effect.
    * @param n - The maximum number of listeners to allow.
-   * @param emitters - The emitters to apply the new limit to; if omitted, sets the global default
-   * instead.
    */
   setMaxListeners(n: number): void
 }
@@ -155,12 +153,32 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
 declare class EventEmitter<in out M extends EventMap = EventMap> {}
 
 declare namespace EventEmitter {
+  /**
+   * Iterate the `name` events emitted by `emitter`, yielding the arguments of each emit as an
+   * array. Unless `name` is `'error'`, an `'error'` event on `emitter` ends the iteration by
+   * rejecting with the emitted error.
+   * @param emitter - The emitter to iterate events from.
+   * @param name - The event name to iterate.
+   * @param opts - Options; `signal` aborts the iteration, rejecting it with an `EventEmitterError`.
+   * @returns An async iterator of the emitted arguments, which stops listening once it is returned
+   * from or throws.
+   * @throws If `opts.signal` has already been aborted.
+   */
   export function on<M extends EventMap, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E,
     opts?: { signal?: AbortSignal }
   ): AsyncIterableIterator<M[E]>
 
+  /**
+   * Wait for the next `name` event emitted by `emitter`. Unless `name` is `'error'`, an `'error'`
+   * event on `emitter` rejects the wait with the emitted error instead.
+   * @param emitter - The emitter to wait on.
+   * @param name - The event name to wait for.
+   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an
+   * `EventEmitterError`.
+   * @returns A promise resolving with the arguments of the next emit, as an array.
+   */
   export function once<M extends EventMap, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E,
@@ -183,13 +201,31 @@ declare namespace EventEmitter {
     opts?: { emit?: (name: E, ...args: T[E]) => void }
   ): void
 
+  /**
+   * Return the number of listeners registered on `emitter` for `name`, by calling the emitter's
+   * own `listenerCount` method.
+   * @param emitter - The emitter to query.
+   * @param name - The event name to count listeners for.
+   */
   export function listenerCount<M extends EventMap, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E
   ): number
 
+  /**
+   * Return the maximum number of listeners for `emitter`.
+   * @param emitter - The emitter to query.
+   * @returns `emitter.getMaxListeners()` if the emitter has that method, otherwise
+   * `EventEmitter.defaultMaxListeners`.
+   */
   export function getMaxListeners(emitter: EventEmitter): number
 
+  /**
+   * Set the maximum number of listeners on each of `emitters` that has a `setMaxListeners` method.
+   * @param n - The maximum number of listeners to allow.
+   * @param emitters - The emitters to apply the new limit to; if omitted, sets
+   * `EventEmitter.defaultMaxListeners` instead.
+   */
   export function setMaxListeners(n: number, ...emitters: EventEmitter[]): void
 
   /** The default max-listeners value used by `getMaxListeners()`. */

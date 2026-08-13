@@ -48,14 +48,7 @@ export class CustomEvent<T = any> {
 export interface AddEventListenerOptions {
   capture?: boolean
   passive?: boolean
-  /**
-   * @param emitter - The emitter to wait on.
-   * @param name - The event name.
-   * @param opts - Options; `signal` aborts the wait, rejecting the promise with an
-   * `EventEmitterError`.
-   * @param fn - The listener function, called once with the event's arguments then removed.
-   * @returns The emitter itself, for chaining — implemented identically to `addOnceListener`.
-   */
+  /** Whether the listener is removed after being invoked once. Defaults to `false`. */
   once?: boolean
   signal?: AbortSignal | null
 }
