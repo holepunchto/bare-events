@@ -89,10 +89,10 @@ function throwUnhandledError(...args) {
 
   if (args.length > 0) err = args[0]
 
-  if (err instanceof Error === false) err = errors.UNHANDLED_ERROR(err)
+  if (err instanceof Error === false) {
+    err = errors.UNHANDLED_ERROR(err)
 
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(err, exports.prototype.emit)
+    if (Error.captureStackTrace) Error.captureStackTrace(err, exports.prototype.emit)
   }
 
   queueMicrotask(() => {
@@ -138,7 +138,7 @@ module.exports = exports = class EventEmitter {
   }
 
   emit(name, ...args) {
-    if (name === 'error' && this._events !== undefined && this._events.error === undefined) {
+    if (name === 'error' && (this._events === undefined || this._events.error === undefined)) {
       throwUnhandledError(...args)
     }
 
@@ -150,7 +150,7 @@ module.exports = exports = class EventEmitter {
   listeners(name) {
     if (this._events === undefined) return []
     const e = this._events[name]
-    return e === undefined ? [] : [...e.list]
+    return e === undefined ? [] : e.list.map((l) => l[0])
   }
 
   rawListeners(name) {
@@ -174,9 +174,13 @@ module.exports = exports = class EventEmitter {
     return EventEmitter.defaultMaxListeners
   }
 
-  setMaxListeners(n) {}
+  setMaxListeners(n) {
+    return this
+  }
 
   removeAllListeners(name) {
+    if (this._events === undefined) return this
+
     if (arguments.length === 0) {
       for (const key of Reflect.ownKeys(this._events)) {
         if (key === 'removeListener') continue
@@ -257,21 +261,17 @@ exports.on = function on(emitter, name, opts = {}) {
   }
 
   function onerror(err) {
-    emitter.off(name, onevent).off('error', onerror)
-
     if (promises.length) {
       promises.shift().reject(err)
     } else {
       error = err
     }
 
-    return Promise.resolve({ done: true })
+    return onclose()
   }
 
   function onabort() {
-    signal.removeEventListener('abort', onabort)
-
-    onerror(errors.OPERATION_ABORTED(signal.reason))
+    return onerror(errors.OPERATION_ABORTED(signal.reason))
   }
 
   function onclose() {
@@ -283,9 +283,11 @@ exports.on = function on(emitter, name, opts = {}) {
 
     done = true
 
-    if (promises.length) promises.shift().resolve({ done: true })
+    const result = { done: true }
 
-    return Promise.resolve({ done: true })
+    while (promises.length) promises.shift().resolve(result)
+
+    return Promise.resolve(result)
   }
 }
 

@@ -457,6 +457,159 @@ test('rawListeners returns a copy', (t) => {
   t.alike(emitter.rawListeners('foo'), [a])
 })
 
+test('listeners returns listener functions', (t) => {
+  const emitter = new EventEmitter()
+  const a = () => {}
+  const b = () => {}
+
+  t.alike(emitter.listeners('foo'), [])
+
+  emitter.on('foo', a).once('foo', b)
+
+  t.alike(emitter.listeners('foo'), [a, b])
+
+  emitter.emit('foo')
+
+  t.alike(emitter.listeners('foo'), [a])
+})
+
+test('listeners returns a copy', (t) => {
+  const emitter = new EventEmitter()
+  const a = () => {}
+
+  emitter.on('foo', a)
+
+  const list = emitter.listeners('foo')
+  list.length = 0
+
+  t.alike(emitter.listeners('foo'), [a])
+})
+
+test('emit error without error listener preserves the error', (t) => {
+  t.plan(3)
+
+  const emitter = new EventEmitter()
+  const err = createError()
+  const stack = err.stack
+
+  uncaughts.once((e) => {
+    t.is(e, err)
+    t.is(e.stack, stack, 'stack is left alone')
+  })
+
+  t.is(emitter.emit('error', err), false)
+
+  function createError() {
+    return new Error('Foo')
+  }
+})
+
+test('emit error without error listener wraps a non-error', (t) => {
+  t.plan(3)
+
+  const emitter = new EventEmitter()
+
+  uncaughts.once((err) => {
+    t.is(err.code, 'UNHANDLED_ERROR')
+    t.is(err.cause, 'Foo')
+  })
+
+  t.is(emitter.emit('error', 'Foo'), false)
+})
+
+test('emit error without event map', (t) => {
+  t.plan(2)
+
+  const emitter = Object.create(EventEmitter.prototype)
+
+  uncaughts.once((err) => t.ok(err))
+
+  t.is(emitter.emit('error', new Error('Foo')), false)
+})
+
+test('remove all without event map', (t) => {
+  const emitter = Object.create(EventEmitter.prototype)
+
+  t.is(emitter.removeAllListeners(), emitter)
+  t.is(emitter.removeAllListeners('foo'), emitter)
+})
+
+test('on + emit error', async (t) => {
+  const emitter = new EventEmitter()
+
+  const iterator = EventEmitter.on(emitter, 'foo')
+
+  emitter.emit('error', new Error('Foo'))
+
+  await t.exception(iterator.next(), /Foo/)
+
+  t.alike(await iterator.next(), { done: true }, 'iterator is closed')
+  t.is(emitter.listenerCount('foo'), 0)
+  t.is(emitter.listenerCount('error'), 0)
+})
+
+test('on + emit error with pending next', async (t) => {
+  const emitter = new EventEmitter()
+
+  const iterator = EventEmitter.on(emitter, 'foo')
+
+  const a = iterator.next()
+  const b = iterator.next()
+
+  emitter.emit('error', new Error('Foo'))
+
+  await t.exception(a, /Foo/)
+
+  t.alike(await b, { done: true })
+})
+
+test('on + return with pending next', async (t) => {
+  const emitter = new EventEmitter()
+
+  const iterator = EventEmitter.on(emitter, 'foo')
+
+  const a = iterator.next()
+  const b = iterator.next()
+
+  await iterator.return()
+
+  t.alike(await a, { done: true })
+  t.alike(await b, { done: true })
+})
+
+test('on signal + emit error', async (t) => {
+  const emitter = new EventEmitter()
+  const signal = createSignal()
+
+  const iterator = EventEmitter.on(emitter, 'foo', { signal })
+
+  emitter.emit('error', new Error('Foo'))
+
+  await t.exception(iterator.next(), /Foo/)
+
+  t.alike(await iterator.next(), { done: true }, 'iterator is closed')
+  t.is(signal.listeners.length, 0, 'abort listener is removed')
+})
+
+test('on signal + abort with pending next', async (t) => {
+  const emitter = new EventEmitter()
+  const controller = new AbortController()
+
+  const iterator = EventEmitter.on(emitter, 'foo', {
+    signal: controller.signal
+  })
+
+  const a = iterator.next()
+  const b = iterator.next()
+
+  controller.abort()
+
+  await t.exception(a, /OPERATION_ABORTED/)
+
+  t.alike(await b, { done: true })
+  t.is(emitter.listenerCount('foo'), 0)
+})
+
 test('EventTarget remove listener during dispatch', (t) => {
   const target = new EventTarget()
   const fired = []
@@ -532,3 +685,107 @@ test('EventTarget signal-aborted listener is removed', (t) => {
 
   t.alike(fired, ['keep'])
 })
+
+test('EventTarget event current target', (t) => {
+  t.plan(3)
+
+  const target = new EventTarget()
+  const event = new Event('x')
+
+  target.addEventListener('x', (e) => {
+    t.is(e.target, target)
+    t.is(e.currentTarget, target)
+  })
+
+  target.dispatchEvent(event)
+
+  t.is(event.currentTarget, null, 'current target is unset after dispatch')
+})
+
+test('EventTarget dispatch during dispatch', (t) => {
+  t.plan(2)
+
+  const target = new EventTarget()
+  const event = new Event('x')
+
+  target.addEventListener('x', () => {
+    t.exception(() => target.dispatchEvent(event), /already being dispatched/)
+  })
+
+  t.is(target.dispatchEvent(event), true)
+})
+
+test('EventTarget dispatch same event twice', (t) => {
+  const target = new EventTarget()
+  const event = new Event('x')
+  const fired = []
+
+  target.addEventListener('x', () => fired.push('a'))
+
+  target.dispatchEvent(event)
+  target.dispatchEvent(event)
+
+  t.alike(fired, ['a', 'a'])
+})
+
+test('EventTarget passive listener cannot prevent default', (t) => {
+  const target = new EventTarget()
+  const event = new Event('x', { cancelable: true })
+
+  target.addEventListener('x', (e) => e.preventDefault(), { passive: true })
+
+  t.is(target.dispatchEvent(event), true)
+  t.is(event.defaultPrevented, false)
+})
+
+test('EventTarget passive listener does not affect siblings', (t) => {
+  const target = new EventTarget()
+  const event = new Event('x', { cancelable: true })
+
+  target.addEventListener('x', (e) => e.preventDefault(), { passive: true })
+  target.addEventListener('x', (e) => e.preventDefault())
+
+  t.is(target.dispatchEvent(event), false)
+  t.is(event.defaultPrevented, true)
+})
+
+test('EventTarget removed listener drops its abort listener', (t) => {
+  const target = new EventTarget()
+  const fn = () => {}
+
+  const signal = createSignal()
+
+  target.addEventListener('x', fn, { signal })
+  t.is(signal.listeners.length, 1)
+
+  target.removeEventListener('x', fn)
+  t.is(signal.listeners.length, 0, 'removed by removeEventListener()')
+
+  const once = createSignal()
+
+  target.addEventListener('x', fn, { signal: once, once: true })
+  t.is(once.listeners.length, 1)
+
+  target.dispatchEvent(new Event('x'))
+  t.is(once.listeners.length, 0, 'removed by a once listener firing')
+})
+
+function createSignal() {
+  const listeners = []
+
+  return {
+    aborted: false,
+    reason: null,
+    listeners,
+
+    addEventListener(type, fn) {
+      listeners.push(fn)
+    },
+
+    removeEventListener(type, fn) {
+      const i = listeners.indexOf(fn)
+
+      if (i !== -1) listeners.splice(i, 1)
+    }
+  }
+}
