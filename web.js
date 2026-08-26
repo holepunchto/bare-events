@@ -5,12 +5,20 @@ const COMPOSED = 0x4
 const CANCELED = 0x8
 const DISPATCH = 0x10
 const STOP = 0x20
+const IN_PASSIVE = 0x40
 
 // EventTarget state
 const CAPTURE = 0x1
 const PASSIVE = 0x2
 const ONCE = 0x4
 const REMOVED = 0x8
+
+// https://webidl.spec.whatwg.org/#invalidstateerror
+class InvalidStateError extends Error {
+  get name() {
+    return 'InvalidStateError'
+  }
+}
 
 // https://dom.spec.whatwg.org/#event
 class Event {
@@ -20,6 +28,7 @@ class Event {
 
     this._type = type
     this._target = null
+    this._currentTarget = null
     this._state = 0
 
     if (bubbles) this._state |= BUBBLES
@@ -39,7 +48,7 @@ class Event {
 
   // https://dom.spec.whatwg.org/#dom-event-currenttarget
   get currentTarget() {
-    return null
+    return this._currentTarget
   }
 
   // https://dom.spec.whatwg.org/#dom-event-bubbles
@@ -69,6 +78,7 @@ class Event {
 
   // https://dom.spec.whatwg.org/#dom-event-preventdefault
   preventDefault() {
+    if (this._state & IN_PASSIVE) return
     if (this._state & CANCELABLE) this._state |= CANCELED
   }
 
@@ -123,6 +133,34 @@ exports.CustomEvent = class CustomEvent extends Event {
   get detail() {
     return this._detail
   }
+
+  toJSON() {
+    return {
+      type: this.type,
+      target: this.target,
+      bubbles: this.bubbles,
+      cancelable: this.cancelable,
+      composed: this.composed,
+      defaultPrevented: this.defaultPrevented,
+      isTrusted: this.isTrusted,
+      detail: this.detail
+    }
+  }
+
+  [Symbol.for('bare.inspect')]() {
+    return {
+      __proto__: { constructor: CustomEvent },
+
+      type: this.type,
+      target: this.target,
+      bubbles: this.bubbles,
+      cancelable: this.cancelable,
+      composed: this.composed,
+      defaultPrevented: this.defaultPrevented,
+      isTrusted: this.isTrusted,
+      detail: this.detail
+    }
+  }
 }
 
 // https://dom.spec.whatwg.org/#eventtarget
@@ -159,6 +197,9 @@ exports.EventTarget = class EventTarget {
 
     if (signal !== null) {
       const self = this
+
+      listener._abort = onabort
+
       signal.addEventListener('abort', onabort)
 
       function onabort() {
@@ -187,7 +228,12 @@ exports.EventTarget = class EventTarget {
 
   // https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent
   dispatchEvent(event) {
+    if (event._state & DISPATCH) {
+      throw new InvalidStateError('Event is already being dispatched')
+    }
+
     event._target = this
+    event._currentTarget = this
     event._state |= DISPATCH
 
     const listeners = this._listeners.get(event.type)
@@ -212,13 +258,25 @@ exports.EventTarget = class EventTarget {
           callback = callback.handleEvent
         }
 
-        Reflect.apply(callback, context, [event])
+        if (listener.passive) event._state |= IN_PASSIVE
+
+        try {
+          Reflect.apply(callback, context, [event])
+        } catch (err) {
+          // https://html.spec.whatwg.org/#report-the-exception
+          queueMicrotask(() => {
+            throw err
+          })
+        }
+
+        event._state &= ~IN_PASSIVE
 
         if (event._state & STOP) break
       }
 
       return (event._state & CANCELED) === 0
     } finally {
+      event._currentTarget = null
       event._state &= ~DISPATCH
       event._state &= ~STOP
     }
@@ -237,6 +295,11 @@ exports.EventTarget = class EventTarget {
   _unlink(type, listener) {
     if (listener.removed) return
 
+    if (listener._abort !== null) {
+      listener._signal.removeEventListener('abort', listener._abort)
+      listener._abort = null
+    }
+
     const head = this._listeners.get(type)
     const next = listener.unlink()
 
@@ -253,6 +316,7 @@ class EventListener {
     this._type = type
     this._callback = callback
     this._signal = signal
+    this._abort = null
     this._state = 0
 
     if (capture) this._state |= CAPTURE

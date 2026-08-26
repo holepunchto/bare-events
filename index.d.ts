@@ -33,14 +33,14 @@ declare class EventEmitterError extends Error {
  * An emitter of named events to which listener functions can be attached, closely mirroring
  * Node.js's `EventEmitter`.
  */
-interface EventEmitter<in out M extends EventMap = EventMap> {
+interface EventEmitter<in out M extends Record<keyof M, unknown[]> = EventMap> {
   /**
    * Add `fn` as a listener for `name`, called on every subsequent emit. Returns `this` for
    * chaining.
    * @param name - The event name to listen for.
    * @param fn - The listener function, called with the event's arguments on each emit.
    */
-  addListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  addListener<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Add `fn` as a listener for `name` that is removed after it fires once. Returns `this` for
@@ -48,7 +48,7 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * @param name - The event name to listen for.
    * @param fn - The listener function, called once with the event's arguments then removed.
    */
-  addOnceListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  addOnceListener<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Like `addListener`, but adds `fn` to the beginning of the listener list instead of the end.
@@ -56,7 +56,7 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * @param fn - The listener function to add to the front of the listener list instead of the end.
    * @returns The emitter itself, for chaining, like `addListener`.
    */
-  prependListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  prependListener<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Like `addOnceListener`, but adds `fn` to the beginning of the listener list instead of the end.
@@ -65,14 +65,14 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * fires once.
    * @returns The emitter itself, for chaining, like `addOnceListener`.
    */
-  prependOnceListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  prependOnceListener<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Remove one instance of `fn` from the listeners for `name`. Returns `this` for chaining.
    * @param name - The event name to remove the listener from.
    * @param fn - The listener function to remove.
    */
-  removeListener<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  removeListener<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Remove all listeners, or only those for `name` if given. Returns `this` for chaining.
@@ -87,7 +87,7 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * @param fn - The listener function, called with the event's arguments on each emit.
    * @returns The emitter itself, for chaining — implemented identically to `addListener`.
    */
-  on<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  on<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Alias for `addOnceListener`.
@@ -95,7 +95,7 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * @param fn - The listener function, called once with the event's arguments then removed.
    * @returns The emitter itself, for chaining — implemented identically to `addOnceListener`.
    */
-  once<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  once<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Alias for `removeListener`.
@@ -103,7 +103,7 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * @param fn - The listener function to remove.
    * @returns The emitter itself, for chaining — implemented identically to `removeListener`.
    */
-  off<E extends keyof M, R>(name: E, fn: EventHandler<M[E], R>): this
+  off<E extends keyof M>(name: E, fn: EventHandler<M[E]>): this
 
   /**
    * Synchronously call each listener registered for `name`, in registration order, with `args`.
@@ -118,14 +118,14 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * Return a copy of the listener array for `name`.
    * @param name - The event name to return the listener array for.
    */
-  listeners<E extends keyof M, R>(name: E): EventHandler<M[E], R>
+  listeners<E extends keyof M>(name: E): EventHandler<M[E]>[]
 
   /**
    * Return a copy of the listener array for `name`, including one-time wrapper listeners as
    * registered.
    * @param name - The event name to return the raw listener array for.
    */
-  rawListeners<E extends keyof M, R>(name: E): EventHandler<M[E], R>[]
+  rawListeners<E extends keyof M>(name: E): EventHandler<M[E]>[]
 
   /** Return an array of the event names that currently have listeners. */
   eventNames(): (keyof M)[]
@@ -147,10 +147,10 @@ interface EventEmitter<in out M extends EventMap = EventMap> {
    * limit is not recorded and the call has no effect.
    * @param n - The maximum number of listeners to allow.
    */
-  setMaxListeners(n: number): void
+  setMaxListeners(n: number): this
 }
 
-declare class EventEmitter<in out M extends EventMap = EventMap> {}
+declare class EventEmitter<in out M extends Record<keyof M, unknown[]> = EventMap> {}
 
 declare namespace EventEmitter {
   /**
@@ -164,7 +164,7 @@ declare namespace EventEmitter {
    * from or throws.
    * @throws If `opts.signal` has already been aborted.
    */
-  export function on<M extends EventMap, E extends keyof M>(
+  export function on<M extends Record<keyof M, unknown[]>, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E,
     opts?: { signal?: AbortSignal }
@@ -179,7 +179,7 @@ declare namespace EventEmitter {
    * `EventEmitterError`.
    * @returns A promise resolving with the arguments of the next emit, as an array.
    */
-  export function once<M extends EventMap, E extends keyof M>(
+  export function once<M extends Record<keyof M, unknown[]>, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E,
     opts?: { signal?: AbortSignal }
@@ -194,7 +194,11 @@ declare namespace EventEmitter {
    * @param opts - Options; `emit` overrides how forwarded events are re-emitted on `to` (defaults
    * to `to.emit`).
    */
-  export function forward<F extends EventMap, E extends keyof F, T extends Pick<F, E>>(
+  export function forward<
+    F extends Record<keyof F, unknown[]>,
+    E extends keyof F,
+    T extends Record<keyof T, unknown[]> & Pick<F, E>
+  >(
     from: EventEmitter<F>,
     to: EventEmitter<T>,
     names: E | E[],
@@ -207,7 +211,7 @@ declare namespace EventEmitter {
    * @param emitter - The emitter to query.
    * @param name - The event name to count listeners for.
    */
-  export function listenerCount<M extends EventMap, E extends keyof M>(
+  export function listenerCount<M extends Record<keyof M, unknown[]>, E extends keyof M>(
     emitter: EventEmitter<M>,
     name: E
   ): number
@@ -218,7 +222,7 @@ declare namespace EventEmitter {
    * @returns `emitter.getMaxListeners()` if the emitter has that method, otherwise
    * `EventEmitter.defaultMaxListeners`.
    */
-  export function getMaxListeners(emitter: EventEmitter): number
+  export function getMaxListeners(emitter: EventEmitter<any>): number
 
   /**
    * Set the maximum number of listeners on each of `emitters` that has a `setMaxListeners` method.
@@ -226,7 +230,7 @@ declare namespace EventEmitter {
    * @param emitters - The emitters to apply the new limit to; if omitted, sets
    * `EventEmitter.defaultMaxListeners` instead.
    */
-  export function setMaxListeners(n: number, ...emitters: EventEmitter[]): void
+  export function setMaxListeners(n: number, ...emitters: EventEmitter<any>[]): void
 
   /** The default max-listeners value used by `getMaxListeners()`. */
   export let defaultMaxListeners: number

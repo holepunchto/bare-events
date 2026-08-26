@@ -9,30 +9,31 @@ class EventListener {
   append(ctx, name, fn, once) {
     this.count++
     ctx.emit('newListener', name, fn) // Emit BEFORE adding
-    this.list.push([fn, once])
+    this.list.push([fn, once, false])
   }
 
   prepend(ctx, name, fn, once) {
     this.count++
     ctx.emit('newListener', name, fn) // Emit BEFORE adding
-    this.list.unshift([fn, once])
+    this.list.unshift([fn, once, false])
   }
 
   remove(ctx, name, fn) {
-    for (let i = 0, n = this.list.length; i < n; i++) {
-      const l = this.list[i]
-
-      if (l[0] === fn) {
-        this.list.splice(i, 1)
-
-        if (this.count === 1) delete ctx._events[name]
-
-        ctx.emit('removeListener', name, fn) // Emit AFTER removing
-
-        this.count--
-        return
-      }
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      if (this.list[i][0] === fn) return this.removeAt(ctx, name, i)
     }
+  }
+
+  removeAt(ctx, name, i) {
+    const fn = this.list[i][0]
+
+    this.list.splice(i, 1)
+
+    if (this.count === 1) delete ctx._events[name]
+
+    ctx.emit('removeListener', name, fn) // Emit AFTER removing
+
+    this.count--
   }
 
   removeAll(ctx, name) {
@@ -54,7 +55,19 @@ class EventListener {
     for (let i = 0, n = list.length; i < n; i++) {
       const l = list[i]
 
-      if (l[1] === true) this.remove(ctx, name, l[0])
+      if (l[1] === true) {
+        // A reentrant emit may already have fired this listener, in which case
+        // it must not be fired again.
+        if (l[2] === true) continue
+
+        l[2] = true
+
+        // Remove this entry, rather than the first one with the same listener,
+        // as the same listener may have been added more than once.
+        const j = this.list.indexOf(l)
+
+        if (j !== -1) this.removeAt(ctx, name, j)
+      }
 
       Reflect.apply(l[0], ctx, args)
     }
@@ -89,10 +102,10 @@ function throwUnhandledError(...args) {
 
   if (args.length > 0) err = args[0]
 
-  if (err instanceof Error === false) err = errors.UNHANDLED_ERROR(err)
+  if (err instanceof Error === false) {
+    err = errors.UNHANDLED_ERROR(err)
 
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(err, exports.prototype.emit)
+    if (Error.captureStackTrace) Error.captureStackTrace(err, exports.prototype.emit)
   }
 
   queueMicrotask(() => {
@@ -138,7 +151,7 @@ module.exports = exports = class EventEmitter {
   }
 
   emit(name, ...args) {
-    if (name === 'error' && this._events !== undefined && this._events.error === undefined) {
+    if (name === 'error' && (this._events === undefined || this._events.error === undefined)) {
       throwUnhandledError(...args)
     }
 
@@ -150,7 +163,7 @@ module.exports = exports = class EventEmitter {
   listeners(name) {
     if (this._events === undefined) return []
     const e = this._events[name]
-    return e === undefined ? [] : [...e.list]
+    return e === undefined ? [] : e.list.map((l) => l[0])
   }
 
   rawListeners(name) {
@@ -174,9 +187,13 @@ module.exports = exports = class EventEmitter {
     return EventEmitter.defaultMaxListeners
   }
 
-  setMaxListeners(n) {}
+  setMaxListeners(n) {
+    return this
+  }
 
   removeAllListeners(name) {
+    if (this._events === undefined) return this
+
     if (arguments.length === 0) {
       for (const key of Reflect.ownKeys(this._events)) {
         if (key === 'removeListener') continue
@@ -257,21 +274,17 @@ exports.on = function on(emitter, name, opts = {}) {
   }
 
   function onerror(err) {
-    emitter.off(name, onevent).off('error', onerror)
-
     if (promises.length) {
       promises.shift().reject(err)
     } else {
       error = err
     }
 
-    return Promise.resolve({ done: true })
+    return onclose()
   }
 
   function onabort() {
-    signal.removeEventListener('abort', onabort)
-
-    onerror(errors.OPERATION_ABORTED(signal.reason))
+    return onerror(errors.OPERATION_ABORTED(signal.reason))
   }
 
   function onclose() {
@@ -283,9 +296,11 @@ exports.on = function on(emitter, name, opts = {}) {
 
     done = true
 
-    if (promises.length) promises.shift().resolve({ done: true })
+    const result = { done: true }
 
-    return Promise.resolve({ done: true })
+    while (promises.length) promises.shift().resolve(result)
+
+    return Promise.resolve(result)
   }
 }
 
@@ -316,19 +331,19 @@ exports.once = function once(emitter, name, opts = {}) {
 
       if (name !== 'error') emitter.off('error', onerror)
 
+      if (signal) signal.removeEventListener('abort', onabort)
+
       reject(err)
     }
 
     function onabort() {
-      signal.removeEventListener('abort', onabort)
-
       onerror(errors.OPERATION_ABORTED(signal.reason))
     }
   })
 }
 
 exports.forward = function forward(from, to, names, opts = {}) {
-  if (typeof names === 'string') names = [names]
+  if (Array.isArray(names) === false) names = [names]
 
   const { emit = to.emit.bind(to) } = opts
 
@@ -338,6 +353,10 @@ exports.forward = function forward(from, to, names, opts = {}) {
         emit(name, ...args)
       }
   )
+
+  for (let i = 0, n = names.length; i < n; i++) {
+    if (to.listenerCount(names[i]) > 0) from.on(names[i], listeners[i])
+  }
 
   to.on('newListener', (name) => {
     const i = names.indexOf(name)
