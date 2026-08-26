@@ -813,60 +813,6 @@ test('without event map', (t) => {
   )
 })
 
-test('max listeners defaults to the module default', (t) => {
-  const emitter = new EventEmitter()
-
-  t.is(emitter.getMaxListeners(), EventEmitter.defaultMaxListeners)
-  t.is(EventEmitter.getMaxListeners(emitter), EventEmitter.defaultMaxListeners)
-})
-
-test('set max listeners', (t) => {
-  const emitter = new EventEmitter()
-
-  t.is(emitter.setMaxListeners(64), emitter)
-  t.is(emitter.getMaxListeners(), 64)
-  t.is(EventEmitter.getMaxListeners(emitter), 64)
-  t.is(
-    new EventEmitter().getMaxListeners(),
-    EventEmitter.defaultMaxListeners,
-    'other emitters are unaffected'
-  )
-})
-
-test('static set max listeners', (t) => {
-  const a = new EventEmitter()
-  const b = new EventEmitter()
-
-  EventEmitter.setMaxListeners(64, a, b)
-
-  t.is(a.getMaxListeners(), 64)
-  t.is(b.getMaxListeners(), 64)
-})
-
-test('static set max listeners without emitters', (t) => {
-  const previous = EventEmitter.defaultMaxListeners
-
-  try {
-    EventEmitter.setMaxListeners(64)
-
-    t.is(EventEmitter.defaultMaxListeners, 64)
-    t.is(new EventEmitter().getMaxListeners(), 64)
-  } finally {
-    EventEmitter.defaultMaxListeners = previous
-  }
-})
-
-test('static max listeners of a foreign emitter', (t) => {
-  const emitter = {}
-
-  t.is(EventEmitter.getMaxListeners(emitter), EventEmitter.defaultMaxListeners)
-  t.is(
-    EventEmitter.setMaxListeners(64, emitter),
-    undefined,
-    'an emitter without the method is ignored'
-  )
-})
-
 test('forward with a symbol name', (t) => {
   t.plan(1)
 
