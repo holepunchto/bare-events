@@ -133,6 +133,34 @@ exports.CustomEvent = class CustomEvent extends Event {
   get detail() {
     return this._detail
   }
+
+  toJSON() {
+    return {
+      type: this.type,
+      target: this.target,
+      bubbles: this.bubbles,
+      cancelable: this.cancelable,
+      composed: this.composed,
+      defaultPrevented: this.defaultPrevented,
+      isTrusted: this.isTrusted,
+      detail: this.detail
+    }
+  }
+
+  [Symbol.for('bare.inspect')]() {
+    return {
+      __proto__: { constructor: CustomEvent },
+
+      type: this.type,
+      target: this.target,
+      bubbles: this.bubbles,
+      cancelable: this.cancelable,
+      composed: this.composed,
+      defaultPrevented: this.defaultPrevented,
+      isTrusted: this.isTrusted,
+      detail: this.detail
+    }
+  }
 }
 
 // https://dom.spec.whatwg.org/#eventtarget
@@ -232,7 +260,14 @@ exports.EventTarget = class EventTarget {
 
         if (listener.passive) event._state |= IN_PASSIVE
 
-        Reflect.apply(callback, context, [event])
+        try {
+          Reflect.apply(callback, context, [event])
+        } catch (err) {
+          // https://html.spec.whatwg.org/#report-the-exception
+          queueMicrotask(() => {
+            throw err
+          })
+        }
 
         event._state &= ~IN_PASSIVE
 
@@ -244,7 +279,6 @@ exports.EventTarget = class EventTarget {
       event._currentTarget = null
       event._state &= ~DISPATCH
       event._state &= ~STOP
-      event._state &= ~IN_PASSIVE
     }
   }
 
