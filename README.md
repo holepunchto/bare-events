@@ -20,6 +20,10 @@ e.on('hello', function (data) {
 e.emit('hello', 'world')
 ```
 
+## API
+
+See the [`bare-events` reference](https://docs.pears.com/reference/bare/modules/bare-events).
+
 ## License
 
 Apache-2.0

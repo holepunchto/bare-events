@@ -22,6 +22,10 @@ export interface Event {
 }
 
 export class Event {
+  /**
+   * @param type - The event's type, exposed as `event.type`.
+   * @param options - Options controlling `bubbles`, `cancelable`, and `composed`.
+   */
   constructor(type: string, options?: EventOptions)
 }
 
@@ -34,12 +38,17 @@ export interface CustomEvent<T = any> extends Event {
 }
 
 export class CustomEvent<T = any> {
+  /**
+   * @param type - The event's type, exposed as `event.type`.
+   * @param options - Options controlling `bubbles`/`cancelable`/`composed` plus the `detail` value.
+   */
   constructor(type: string, options?: CustomEventOptions<T>)
 }
 
 export interface AddEventListenerOptions {
   capture?: boolean
   passive?: boolean
+  /** Whether the listener is removed after being invoked once. Defaults to `false`. */
   once?: boolean
   signal?: AbortSignal | null
 }
@@ -49,18 +58,35 @@ export interface RemoveEventListenerOptions {
 }
 
 export interface EventTarget {
+  /**
+   * @param type - The event type to listen for.
+   * @param callback - The listener function, or an object with a `handleEvent` method.
+   * @param options - Options, or a boolean shorthand for `capture`; `once` removes the listener
+   * after it fires, `signal` removes it when the given `AbortSignal` aborts.
+   */
   addEventListener(
     type: string,
     callback: EventListener,
     options?: AddEventListenerOptions | boolean
   ): void
 
+  /**
+   * @param type - The event type to stop listening for.
+   * @param callback - The listener to remove.
+   * @param options - Options, or a boolean shorthand for `capture`; must match the `capture` value
+   * passed to `addEventListener`.
+   */
   removeEventListener(
     type: string,
     callback: EventListener,
     options?: RemoveEventListenerOptions | boolean
   ): void
 
+  /**
+   * @param event - The event to dispatch to this target's listeners.
+   * @returns `false` if the event is cancelable and `preventDefault()` was called on it during
+   * dispatch, `true` otherwise.
+   */
   dispatchEvent(event: Event): boolean
 }
 
@@ -75,5 +101,8 @@ export interface EventCallback {
 }
 
 export interface EventHandler {
+  /**
+   * @param event - The event passed to the handler.
+   */
   handleEvent(event: Event): void
 }
